@@ -8,6 +8,7 @@ import java.util.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.util.List;
 
 class ChessVisualSquare extends JPanel {
     ChessSquare link;
@@ -136,6 +137,8 @@ public class ChessBoard extends JPanel implements MouseListener, ActionListener 
 
     final static ImageIcon invalidIcon = new ImageIcon("sprites/invalid.png");
 
+    public final static char pieceArr[] = new char[]{'P', 'B', 'N', 'R', 'Q', 'K', 'p', 'b', 'n', 'r', 'q', 'k'};
+
     static ImageIcon getSpriteBySign(char sign) {
         switch (sign) {
             case 'P':
@@ -186,11 +189,13 @@ public class ChessBoard extends JPanel implements MouseListener, ActionListener 
     Point moveVel;
     ChessVisualSquare movingSprite;
 
+    //List<RealMove> moveHistory;
+    Stack<RealMove> moveHistory;
+
     void initAllSprites() {
         this.scaledPieces = new HashMap<Character, Image>();
-        char spriteArr[] = new char[]{'P', 'B', 'N', 'R', 'Q', 'K', 'p', 'b', 'n', 'r', 'q', 'k'};
         //this.scaledPieces.put('P', getResizedSprite(ChessBoard.getSpriteBySign((this.link.getPiece().getSign())), this.getPreferredSize().height).getImage())
-        for (char piece : spriteArr) {
+        for (char piece : pieceArr) {
             this.scaledPieces.put(piece, getResizedSprite(getSpriteBySign(piece), squareSize).getImage());
         }
     }
@@ -204,6 +209,7 @@ public class ChessBoard extends JPanel implements MouseListener, ActionListener 
         this.squares = new ChessVisualSquare[width][height];
         this.initAllSprites();
         this.selection = null;
+        moveHistory = new Stack<RealMove>();
         for (int i = 0; i < height; ++i) {
             for (int j = 0; j < width; ++j) {
                 boolean isLight = (i + j) % 2 == 0; //light = light square + dark text
@@ -233,9 +239,45 @@ public class ChessBoard extends JPanel implements MouseListener, ActionListener 
             }
         }
     }
-
-    public void move(ChessVisualSquare sqrFrom, ChessVisualSquare sqrTo) {
-        chessPosition.move(sqrFrom.link, sqrTo.link);
+    /*
+        public void move(ChessVisualSquare sqrFrom, ChessVisualSquare sqrTo) {
+            chessPosition.move(sqrFrom.link, sqrTo.link);
+            sqrTo.setupSprite(scaledPieces.get(sqrTo.link.getPiece().getSign())); //this is kinda bad
+            moveDest = new Point(sqrTo.boardPoint.x, sqrTo.boardPoint.y);
+            moveVel = new Point(0, 0);
+            sqrTo.snapSpriteToSquare(sqrFrom.link.getFile(), sqrFrom.link.getRank(), squareSize);
+            sqrTo.spriteMoving = true;
+            movingSprite = sqrTo;
+            moveAnimTimer = new Timer(1, this);
+            moveAnimTimer.start();
+            if (chessPosition.numLegalMoves == 0) {
+                if (chessPosition.kingInCheck()) {
+                    if (chessPosition.whiteToMove) {
+                        System.out.println("Black wins!");
+                    }
+                    else {
+                        System.out.println("White wins!");
+                    }
+                }
+                else {
+                    System.out.println("Stalemate!");
+                }
+            }
+        }
+    */
+    public void move(RealMove move) {
+        ChessVisualSquare sqrTo = squares[move.getRankDestination()][move.getFileDestination()],
+                sqrFrom = squares[move.getRankFrom()][move.getFileFrom()];
+        if ((move.flags & MoveFlags.RM_PROMOTION) == MoveFlags.RM_PROMOTION) {
+            if ((white.getIsHuman() && chessPosition.whiteToMove) ||
+                    (black.getIsHuman() && !chessPosition.whiteToMove)) {
+                //todo select the promotion
+                System.out.println("Congratulations, you are automatically promoting to a knight!");
+                move.arg = chessPosition.whiteToMove ? 'N' : 'n';
+            }
+        }
+        moveHistory.add(move);
+        chessPosition.move(move);
         sqrTo.setupSprite(scaledPieces.get(sqrTo.link.getPiece().getSign())); //this is kinda bad
         moveDest = new Point(sqrTo.boardPoint.x, sqrTo.boardPoint.y);
         moveVel = new Point(0, 0);
@@ -274,7 +316,16 @@ public class ChessBoard extends JPanel implements MouseListener, ActionListener 
         stopMoving();
         ChessVisualSquare sqr = (ChessVisualSquare)e.getSource();
         if (sqr.isLegalDestination() && selection != null) {
-            move(selection, sqr);
+            RealMove move = null;
+            for (RealMove mv : selection.link.legalMoves) {
+                if (mv.to == sqr.link) {
+                    move = mv;
+                    break;
+                    //if there are multiple moves from the selected square to the same square then it's a promotion
+                }
+            }
+            //move(selection, sqr);
+            move(move);
         }
         selection = null;
         for (ChessVisualSquare vr[] : squares) {
@@ -289,8 +340,12 @@ public class ChessBoard extends JPanel implements MouseListener, ActionListener 
                 selection = squares[sqr.link.getRank()][sqr.link.getFile()];
                 selection.setBackground(new Color(36, 129, 183));
                 if (sqr.link.legalMoves != null) {
-                    for (Point v : sqr.link.legalMoves) {
-                        squares[v.y][v.x].markAsLegalDestination((v.y + v.x) % 2 == 0 ? new Color(232, 12, 12) : new Color(194, 21, 15));
+                    //for (Point v : sqr.link.legalMoves) {
+                    //    squares[v.y][v.x].markAsLegalDestination((v.y + v.x) % 2 == 0 ? new Color(232, 12, 12) : new Color(194, 21, 15));
+                    //}
+                    for (RealMove rm : sqr.link.legalMoves) {
+                        int y = rm.getRankDestination(), x = rm.getFileDestination();
+                        squares[y][x].markAsLegalDestination((x + y) % 2 == 0 ? new Color(232, 12, 12) : new Color(194, 21, 15));
                     }
                 }
             }
@@ -300,7 +355,14 @@ public class ChessBoard extends JPanel implements MouseListener, ActionListener 
 
     @Override
     public void mousePressed(MouseEvent e) {
-
+        if (e.getButton() == 3) {
+            System.out.println("Pressed mouse 3");
+            if (!moveHistory.isEmpty()) {
+                chessPosition.undoMove(moveHistory.pop());
+                System.out.println("undoing the last move");
+                this.repaint();
+            }
+        }
     }
 
     @Override
