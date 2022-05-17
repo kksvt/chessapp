@@ -8,7 +8,6 @@ public class ChessSquare {
     Piece piece;
     int file;
     int rank;
-    //List<Point> legalMoves;
     List<RealMove> legalMoves;
     List<MovePin> pins;
 

@@ -66,7 +66,7 @@ class ChessVisualSquare extends JPanel {
             this.sprite = sprite;
             //this.boardPoint.setLocation = new Point(0, 0);
             if (!this.spriteMoving) {
-                this.snapSpriteToSquare(this.getPreferredSize().height);
+                this.snapSpriteToSquare(this.getHeight());
             }
         }
         return (this.sprite != null);
@@ -117,6 +117,43 @@ class ChessVisualSquare extends JPanel {
         number.setVerticalAlignment(JLabel.TOP);
         this.add(number, BorderLayout.EAST);
     }
+}
+
+class MovingSprite {
+    ChessVisualSquare movingSprite;
+    Point moveDest;
+    Point moveVel;
+
+    public MovingSprite(ChessVisualSquare from, ChessVisualSquare to, Image sprite) {//Point moveDest) {
+        to.setupSprite(sprite); //this is kinda bad
+        this.moveDest = new Point(to.boardPoint.x, to.boardPoint.y);
+        this.moveVel = new Point(0, 0);
+        to.snapSpriteToSquare(from.link.getFile(), from.link.getRank(), from.getHeight());
+        to.spriteMoving = true;
+        this.movingSprite = to;
+    }
+
+    public boolean isVelocitySet() {
+        return (moveVel.x != 0 || moveVel.y != 0);
+    }
+
+    public void setVelocity(int x, int y) {
+        moveVel.x = x;
+        moveVel.y = y;
+    }
+
+    public void stopMoving() {
+        if (isMoving()) {
+            movingSprite.snapSpriteToSquare(movingSprite.getHeight());
+            movingSprite.spriteMoving = false;
+            movingSprite = null;
+        }
+    }
+
+    boolean isMoving() {
+        return (movingSprite != null && movingSprite.spriteMoving);
+    }
+
 }
 
 public class ChessBoard extends JPanel implements MouseListener, ActionListener {
@@ -185,9 +222,10 @@ public class ChessBoard extends JPanel implements MouseListener, ActionListener 
     ChessVisualSquare selection; //currently selected square
     //animating the move
     Timer moveAnimTimer;
-    Point moveDest;
-    Point moveVel;
-    ChessVisualSquare movingSprite;
+    //Point moveDest;
+    //Point moveVel;
+    //ChessVisualSquare movingSprite;
+    List<MovingSprite> movingSprites;
 
     //List<RealMove> moveHistory;
     Stack<RealMove> moveHistory;
@@ -209,7 +247,8 @@ public class ChessBoard extends JPanel implements MouseListener, ActionListener 
         this.squares = new ChessVisualSquare[width][height];
         this.initAllSprites();
         this.selection = null;
-        moveHistory = new Stack<RealMove>();
+        this.moveHistory = new Stack<RealMove>();
+        this.movingSprites = new ArrayList<MovingSprite>();
         for (int i = 0; i < height; ++i) {
             for (int j = 0; j < width; ++j) {
                 boolean isLight = (i + j) % 2 == 0; //light = light square + dark text
@@ -230,7 +269,11 @@ public class ChessBoard extends JPanel implements MouseListener, ActionListener 
 
     public void paint(Graphics g) {
         super.paint(g);
-        squareSize = squares[0][0].getPreferredSize().height;
+        if (squareSize != squares[0][0].getHeight()) {
+            stopMoving();
+            squareSize = squares[0][0].getHeight();
+            initAllSprites();
+        }
         for (ChessVisualSquare vr[] : squares) {
             for (ChessVisualSquare r : vr) {
                 if (!r.link.isEmpty() && r.setupSprite(scaledPieces.get(r.link.getPiece().getSign()))) {
@@ -239,36 +282,11 @@ public class ChessBoard extends JPanel implements MouseListener, ActionListener 
             }
         }
     }
-    /*
-        public void move(ChessVisualSquare sqrFrom, ChessVisualSquare sqrTo) {
-            chessPosition.move(sqrFrom.link, sqrTo.link);
-            sqrTo.setupSprite(scaledPieces.get(sqrTo.link.getPiece().getSign())); //this is kinda bad
-            moveDest = new Point(sqrTo.boardPoint.x, sqrTo.boardPoint.y);
-            moveVel = new Point(0, 0);
-            sqrTo.snapSpriteToSquare(sqrFrom.link.getFile(), sqrFrom.link.getRank(), squareSize);
-            sqrTo.spriteMoving = true;
-            movingSprite = sqrTo;
-            moveAnimTimer = new Timer(1, this);
-            moveAnimTimer.start();
-            if (chessPosition.numLegalMoves == 0) {
-                if (chessPosition.kingInCheck()) {
-                    if (chessPosition.whiteToMove) {
-                        System.out.println("Black wins!");
-                    }
-                    else {
-                        System.out.println("White wins!");
-                    }
-                }
-                else {
-                    System.out.println("Stalemate!");
-                }
-            }
-        }
-    */
+
     public void move(RealMove move) {
         ChessVisualSquare sqrTo = squares[move.getRankDestination()][move.getFileDestination()],
                 sqrFrom = squares[move.getRankFrom()][move.getFileFrom()];
-        if ((move.flags & MoveFlags.RM_PROMOTION) == MoveFlags.RM_PROMOTION) {
+        if (MoveFlags.hasFlag(move.flags, MoveFlags.RM_PROMOTION)) {
             if ((white.getIsHuman() && chessPosition.whiteToMove) ||
                     (black.getIsHuman() && !chessPosition.whiteToMove)) {
                 //todo select the promotion
@@ -278,12 +296,21 @@ public class ChessBoard extends JPanel implements MouseListener, ActionListener 
         }
         moveHistory.add(move);
         chessPosition.move(move);
-        sqrTo.setupSprite(scaledPieces.get(sqrTo.link.getPiece().getSign())); //this is kinda bad
-        moveDest = new Point(sqrTo.boardPoint.x, sqrTo.boardPoint.y);
-        moveVel = new Point(0, 0);
-        sqrTo.snapSpriteToSquare(sqrFrom.link.getFile(), sqrFrom.link.getRank(), squareSize);
-        sqrTo.spriteMoving = true;
-        movingSprite = sqrTo;
+        movingSprites.add(new MovingSprite(sqrFrom, sqrTo, scaledPieces.get(sqrTo.link.getPiece().getSign())));
+        if (MoveFlags.hasFlag(move.flags, MoveFlags.RM_CASTLE_KINGSIDE)) {
+            int rank = move.getRankDestination(),
+                    file = chessPosition.rookPositionX[chessPosition.whiteToMove ? 1 : 0][0];
+            movingSprites.add(new MovingSprite(squares[rank][file],
+                    squares[rank][chessPosition.width - 3],
+                    scaledPieces.get(squares[rank][chessPosition.width - 3].link.getPiece().getSign())));
+        }
+        else if (MoveFlags.hasFlag(move.flags, MoveFlags.RM_CASTLE_QUEENSIDE)) {
+            int rank = move.getRankDestination(),
+                    file = chessPosition.rookPositionX[chessPosition.whiteToMove ? 1 : 0][1];
+            movingSprites.add(new MovingSprite(squares[rank][file],
+                    squares[rank][3],
+                    scaledPieces.get(squares[rank][3].link.getPiece().getSign())));
+        }
         moveAnimTimer = new Timer(1, this);
         moveAnimTimer.start();
         if (chessPosition.numLegalMoves == 0) {
@@ -302,11 +329,18 @@ public class ChessBoard extends JPanel implements MouseListener, ActionListener 
     }
 
     private void stopMoving() {
-        if (movingSprite != null) {
+        /*if (movingSprite != null) {
             moveAnimTimer.stop();
             movingSprite.snapSpriteToSquare(squareSize);
             movingSprite.spriteMoving = false;
             movingSprite = null;
+        }*/
+        if (!movingSprites.isEmpty()) {
+            for (MovingSprite ms : movingSprites) {
+                ms.stopMoving();
+            }
+            movingSprites.clear();
+            moveAnimTimer.stop();
         }
         this.repaint();
     }
@@ -356,7 +390,6 @@ public class ChessBoard extends JPanel implements MouseListener, ActionListener 
     @Override
     public void mousePressed(MouseEvent e) {
         if (e.getButton() == 3) {
-            System.out.println("Pressed mouse 3");
             if (!moveHistory.isEmpty()) {
                 chessPosition.undoMove(moveHistory.pop());
                 System.out.println("undoing the last move");
@@ -382,34 +415,51 @@ public class ChessBoard extends JPanel implements MouseListener, ActionListener 
     //move timer
     @Override
     public void actionPerformed(ActionEvent e) {
-        int dx = moveDest.x - movingSprite.boardPoint.x,
-                dy = moveDest.y - movingSprite.boardPoint.y;
-        int dxabs = Math.abs(dx), dyabs = Math.abs(dy);
-        if (dxabs <= 2 && dyabs <= 2) {
-            stopMoving();
-        } else {
-            if (moveVel.x == 0 && moveVel.y == 0) {
-                if (dx != 0 && dy != 0) {
-                    if (dxabs != dyabs) {
-                        moveVel.x = dx / Math.min(dxabs, dyabs);
-                        moveVel.y = dy / Math.min(dxabs, dyabs);
-                    } else {
-                        moveVel.x = 2 * dx / dxabs;
-                        moveVel.y = 2 * dy / dyabs;
-                    }
+        if (!movingSprites.isEmpty()) {
+            boolean stillMoving = false;
+            for (MovingSprite ms : movingSprites) {
+                if (!ms.isMoving()) {
+                    continue;
+                }
+                stillMoving = true;
+                int dx = ms.moveDest.x - ms.movingSprite.boardPoint.x,
+                        dy = ms.moveDest.y - ms.movingSprite.boardPoint.y;
+                int dxabs = Math.abs(dx), dyabs = Math.abs(dy);
+                if (dxabs <= 2 && dyabs <= 2) {
+                    ms.stopMoving();
                 } else {
-                    if (dx == 0) {
-                        moveVel.x = 0;
-                        moveVel.y = 2 * dy / dyabs;
-                    } else {
-                        moveVel.x = 2 * dx / dxabs;
-                        moveVel.y = 0;
+                    if (!ms.isVelocitySet()) {
+                        if (dx != 0 && dy != 0) {
+                            if (dxabs != dyabs) {
+                                ms.moveVel.x = dx / Math.min(dxabs, dyabs);
+                                ms.moveVel.y = dy / Math.min(dxabs, dyabs);
+                            } else {
+                                ms.moveVel.x = 2 * dx / dxabs;
+                                ms.moveVel.y = 2 * dy / dyabs;
+                            }
+                        } else {
+                            if (dx == 0) {
+                                ms.moveVel.x = 0;
+                                ms.moveVel.y = 2 * dy / dyabs;
+                            } else {
+                                ms.moveVel.x = 2 * dx / dxabs;
+                                ms.moveVel.y = 0;
+                            }
+                        }
                     }
+                    ms.movingSprite.boardPoint.x += ms.moveVel.x;
+                    ms.movingSprite.boardPoint.y += ms.moveVel.y;
                 }
             }
-            movingSprite.boardPoint.x += moveVel.x;
-            movingSprite.boardPoint.y += moveVel.y;
-            this.repaint();
+            if (stillMoving) {
+                this.repaint();
+            }
+            else {
+                stopMoving();
+            }
+        }
+        else {
+            moveAnimTimer.stop();
         }
     }
 }

@@ -8,6 +8,7 @@ public class MoveFlags {
     final static int RM_WHITE_CASTLE_QUEENSIDE_IMPOSSIBLE = 16;
     final static int RM_BLACK_CASTLE_KINGSIDE_IMPOSSIBLE = 32;
     final static int RM_BLACK_CASTLE_QUEENSIDE_IMPOSSIBLE = 64;
+    final static int RM_ROOK_CASTLING = 128;
 
     public static boolean hasFlag(int bitmask, int flag) {
         return (bitmask & flag) == flag;

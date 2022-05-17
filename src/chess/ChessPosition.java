@@ -22,7 +22,6 @@ public class ChessPosition {
     int height;
     boolean attackedSquares[][];
     boolean threatenedSquares[][];
-    //Piece pieces[][];
     ChessSquare squares[][];
     boolean whiteToMove;
     int enPassant;
@@ -36,7 +35,6 @@ public class ChessPosition {
     List<MovePin> kingThreats;
     ChessSquare kingSquare;
 
-    //List<Integer> rookPositionX;
     int rookPositionX[][];
 
     static boolean isValidPiece(char piece) {
@@ -58,7 +56,6 @@ public class ChessPosition {
         this.height = height;
         attackedSquares = new boolean[height][width];
         threatenedSquares = new boolean[height][width];
-        //rookPositionX = new ArrayList<Integer>();
         rookPositionX = new int[2][2];
         squares = new ChessSquare[height][width];
         if (!parsePosition(position)) {
@@ -95,6 +92,7 @@ public class ChessPosition {
                 continue;
             }
             else if (rank == height - 1 && file == width) {
+                //todo
                 castleFlags = (BLACK_KINGSIDE | BLACK_QUEENSIDE | WHITE_KINGSIDE | WHITE_QUEENSIDE);
             }
             else {
@@ -116,7 +114,6 @@ public class ChessPosition {
                             ++i;
                         }
                         --i;
-                        //file += skip;
                         while (--skip >= 0) {
                             if (file == width) {
                                 return false;
@@ -129,9 +126,7 @@ public class ChessPosition {
                         if (file >= width || rank >= height) {
                             return false;
                         }
-                        //pieces[rank][file++] = c;
                         Piece piece;
-                        //the king has to be between 2 rooks
                         boolean isWhitePiece = Character.isLowerCase(c);
                         switch (Character.toLowerCase(c)) {
                             case 'k':
@@ -153,21 +148,6 @@ public class ChessPosition {
                                 piece = new Bishop(c);
                                 break;
                             case 'r':
-                                /*switch (rookPositionX.size()) {
-                                    case 0:
-                                    case 2:
-                                        piece = new Rook(c, false, true);
-                                        rookPositionX.add(file);
-                                        break;
-                                    case 1:
-                                    case 3:
-                                        piece = new Rook(c, true, false);
-                                        rookPositionX.add(file);
-                                        break;
-                                    default:
-                                        piece = new Rook(c);
-                                        break;
-                                }*/
                                 if (isWhitePiece && whiteRooks < 2) {
                                     rookPositionX[1][placedWhiteKing ? 0 : 1] = file;
                                     piece = new Rook(c, placedWhiteKing, !placedWhiteKing);
@@ -302,7 +282,7 @@ public class ChessPosition {
     }
 
     public void calculateLegalMoves(ChessSquare s) throws IllegalPositionException {
-        s.legalMoves = new ArrayList<RealMove>();//new ArrayList<Point>();
+        s.legalMoves = new ArrayList<RealMove>();
         int x, y;
         Piece p = s.getPiece();
         for (PieceMove pm : s.getPiece().getMoves()) {
@@ -423,8 +403,20 @@ public class ChessPosition {
             move.to.piece = move.fromPiece;
         }
         move.from.removePiece();
-        whiteToMove = !whiteToMove;
-        calculateLegalMoves();
+        if (MoveFlags.hasFlag(move.flags, MoveFlags.RM_CASTLE_KINGSIDE)) {
+            move(new RealMove(squares[move.from.getRank()][rookPositionX[whiteToMove ? 1 : 0][0]],
+                    squares[move.from.getRank()][width - 3],
+                    MoveFlags.RM_ROOK_CASTLING));
+        }
+        else if (MoveFlags.hasFlag(move.flags, MoveFlags.RM_CASTLE_QUEENSIDE)) {
+            move(new RealMove(squares[move.from.getRank()][rookPositionX[whiteToMove ? 1 : 0][1]],
+                    squares[move.from.getRank()][3],
+                    MoveFlags.RM_ROOK_CASTLING));
+        }
+        if (!MoveFlags.hasFlag(move.flags, MoveFlags.RM_ROOK_CASTLING)) {
+            whiteToMove = !whiteToMove;
+            calculateLegalMoves();
+        }
         return true;
     }
 
@@ -452,6 +444,31 @@ public class ChessPosition {
         }
         if (MoveFlags.hasFlag(move.flags, MoveFlags.RM_BLACK_CASTLE_QUEENSIDE_IMPOSSIBLE)) {
             castleFlags |= BLACK_QUEENSIDE;
+        }
+        //restoring the rook after undoing castling
+        if (MoveFlags.hasFlag(move.flags, MoveFlags.RM_CASTLE_KINGSIDE)) {
+            if (!whiteToMove) {
+                move(new RealMove(squares[move.from.getRank()][width - 3],
+                        squares[move.from.getRank()][rookPositionX[1][0]],
+                        MoveFlags.RM_ROOK_CASTLING));
+            }
+            else {
+                move(new RealMove(squares[move.from.getRank()][width - 3],
+                        squares[move.from.getRank()][rookPositionX[0][0]],
+                        MoveFlags.RM_ROOK_CASTLING));
+            }
+        }
+        else if (MoveFlags.hasFlag(move.flags, MoveFlags.RM_CASTLE_QUEENSIDE)) {
+            if (!whiteToMove) {
+                move(new RealMove(squares[move.from.getRank()][3],
+                        squares[move.from.getRank()][rookPositionX[1][1]],
+                        MoveFlags.RM_ROOK_CASTLING));
+            }
+            else {
+                move(new RealMove(squares[move.from.getRank()][3],
+                        squares[move.from.getRank()][rookPositionX[0][1]],
+                        MoveFlags.RM_ROOK_CASTLING));
+            }
         }
         whiteToMove = !whiteToMove;
         calculateLegalMoves();
