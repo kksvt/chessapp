@@ -6,11 +6,11 @@ import java.awt.*;
 
 public class ChessPosition {
     String fen = "";
-    final static String defaultPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-    final static int WHITE_KINGSIDE = 1;
-    final static int WHITE_QUEENSIDE = 2;
-    final static int BLACK_KINGSIDE = 4;
-    final static int BLACK_QUEENSIDE = 8;
+    public final static String defaultPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    public final static int WHITE_KINGSIDE = 1;
+    public final static int WHITE_QUEENSIDE = 2;
+    public final static int BLACK_KINGSIDE = 4;
+    public final static int BLACK_QUEENSIDE = 8;
 
     final static int QUEEN_VALUE = 900;
     final static int ROOK_VALUE = 500;
@@ -36,13 +36,8 @@ public class ChessPosition {
     List<MovePin> kingThreats;
     ChessSquare kingSquare;
 
-    int whiteKingMoves;
-    int whiteQRookMoves;
-    int whiteKRookMoves;
-
-    int blackKingMoves;
-    int blackQRookMoves;
-    int blackKRookMoves;
+    //List<Integer> rookPositionX;
+    int rookPositionX[][];
 
     static boolean isValidPiece(char piece) {
         switch (Character.toLowerCase(piece)) {
@@ -63,6 +58,8 @@ public class ChessPosition {
         this.height = height;
         attackedSquares = new boolean[height][width];
         threatenedSquares = new boolean[height][width];
+        //rookPositionX = new ArrayList<Integer>();
+        rookPositionX = new int[2][2];
         squares = new ChessSquare[height][width];
         if (!parsePosition(position)) {
             System.out.println("Invalid FEN, applying default starting position...");
@@ -82,8 +79,6 @@ public class ChessPosition {
         whiteToMove = true;
         fullMove = halfMove = enPassant = -1;
         castleFlags = 0;
-        whiteKingMoves = whiteKRookMoves = whiteQRookMoves = 0;
-        blackKingMoves = blackKRookMoves = blackQRookMoves = 0;
         for (int i = 0; i < height; ++i) {
             for (int j = 0; j < width; ++j) {
                 squares[i][j] = null;
@@ -92,13 +87,15 @@ public class ChessPosition {
         if (position.length() == 0) {
             return false;
         }
+        boolean placedWhiteKing = false, placedBlackKing = false;
+        int whiteRooks = 0, blackRooks = 0;
         for (int i = 0, rank = 0, file = 0; i < position.length(); ++i) {
             char c = position.charAt(i);
             if (Character.isSpaceChar(c)) {
                 continue;
             }
             else if (rank == height - 1 && file == width) {
-
+                castleFlags = (BLACK_KINGSIDE | BLACK_QUEENSIDE | WHITE_KINGSIDE | WHITE_QUEENSIDE);
             }
             else {
                 if (c == '\\' || c == '/') {
@@ -134,8 +131,16 @@ public class ChessPosition {
                         }
                         //pieces[rank][file++] = c;
                         Piece piece;
+                        //the king has to be between 2 rooks
+                        boolean isWhitePiece = Character.isLowerCase(c);
                         switch (Character.toLowerCase(c)) {
                             case 'k':
+                                if (isWhitePiece) {
+                                    placedWhiteKing = true;
+                                }
+                                else {
+                                    placedBlackKing = true;
+                                }
                                 piece = new King(c);
                                 break;
                             case 'q':
@@ -148,7 +153,34 @@ public class ChessPosition {
                                 piece = new Bishop(c);
                                 break;
                             case 'r':
-                                piece = new Rook(c);
+                                /*switch (rookPositionX.size()) {
+                                    case 0:
+                                    case 2:
+                                        piece = new Rook(c, false, true);
+                                        rookPositionX.add(file);
+                                        break;
+                                    case 1:
+                                    case 3:
+                                        piece = new Rook(c, true, false);
+                                        rookPositionX.add(file);
+                                        break;
+                                    default:
+                                        piece = new Rook(c);
+                                        break;
+                                }*/
+                                if (isWhitePiece && whiteRooks < 2) {
+                                    rookPositionX[1][placedWhiteKing ? 0 : 1] = file;
+                                    piece = new Rook(c, placedWhiteKing, !placedWhiteKing);
+                                    ++whiteRooks;
+                                }
+                                else if (!isWhitePiece && blackRooks < 2){
+                                    rookPositionX[0][placedBlackKing ? 0 : 1] = file;
+                                    piece = new Rook(c, placedBlackKing, !placedBlackKing);
+                                    ++blackRooks;
+                                }
+                                else {
+                                    piece = new Rook(c);
+                                }
                                 break;
                             default:
                                 piece = new Pawn(c);
@@ -341,7 +373,13 @@ public class ChessPosition {
                             }
                         }
                         else {
-                            s.legalMoves.add(new RealMove(s, squares[y][x]));
+                            if (Character.toLowerCase(p.getSign()) == 'k' && Math.abs(pm.getVector().x) == 2) {
+                                s.legalMoves.add(new RealMove(s, squares[y][x],
+                                        pm.getVector().x > 0 ? MoveFlags.RM_CASTLE_KINGSIDE : MoveFlags.RM_CASTLE_QUEENSIDE));
+                            }
+                            else {
+                                s.legalMoves.add(new RealMove(s, squares[y][x]));
+                            }
                             ++numLegalMoves;
                         }
                     }
@@ -360,10 +398,12 @@ public class ChessPosition {
     }
 
     public boolean move(RealMove move) {
+        move.fromPiece.commitMove(move, this);
         if (move.toPiece != null) {
+            move.toPiece.commitCaptured(move, this);
             move.to.removePiece();
         }
-        if ((move.flags & MoveFlags.RM_PROMOTION) == MoveFlags.RM_PROMOTION) {
+        if (MoveFlags.hasFlag(move.flags, MoveFlags.RM_PROMOTION)) {
             switch (Character.toLowerCase(move.arg)) {
                 case 'b':
                     move.to.piece = new Bishop(move.arg);
@@ -396,39 +436,22 @@ public class ChessPosition {
             move.from.removePiece();
         }
         if (move.fromPiece != null) {
-            switch (move.fromPiece.getSign()) {
-                case 'k':
-                    --blackKingMoves;
-                    break;
-                case 'K':
-                    --whiteKingMoves;
-                    break;
-                case 'R':
-                case 'r':
-                    Rook r = (Rook)move.fromPiece; //i should be hanged for coding this
-                    if (r.isKingSide()) {
-                        if (r.isWhite()) {
-                            --whiteKRookMoves;
-                        }
-                        else {
-                            --blackKRookMoves;
-                        }
-                    }
-                    else if (r.isQueenSide()) {
-                        if (r.isWhite()) {
-                            --whiteQRookMoves;
-                        }
-                        else {
-                            --blackQRookMoves;
-                        }
-                    }
-                    break;
-            }
             move.from.piece = move.fromPiece;
         }
         if (move.toPiece != null) {
-            System.out.println("toPiece is " + move.toPiece.getSign());
             move.to.piece = move.toPiece;
+        }
+        if (MoveFlags.hasFlag(move.flags, MoveFlags.RM_WHITE_CASTLE_KINGSIDE_IMPOSSIBLE)) {
+            castleFlags |= WHITE_KINGSIDE;
+        }
+        if (MoveFlags.hasFlag(move.flags, MoveFlags.RM_WHITE_CASTLE_QUEENSIDE_IMPOSSIBLE)) {
+            castleFlags |= WHITE_QUEENSIDE;
+        }
+        if (MoveFlags.hasFlag(move.flags, MoveFlags.RM_BLACK_CASTLE_KINGSIDE_IMPOSSIBLE)) {
+            castleFlags |= BLACK_KINGSIDE;
+        }
+        if (MoveFlags.hasFlag(move.flags, MoveFlags.RM_BLACK_CASTLE_QUEENSIDE_IMPOSSIBLE)) {
+            castleFlags |= BLACK_QUEENSIDE;
         }
         whiteToMove = !whiteToMove;
         calculateLegalMoves();
@@ -452,5 +475,39 @@ public class ChessPosition {
 
     public boolean kingInCheck() {
         return whiteCheck || blackCheck;
+    }
+
+    public boolean whiteCastleKingSide() {
+        return (castleFlags & WHITE_KINGSIDE) == WHITE_KINGSIDE;
+    }
+
+    public boolean blackCastleKingSide() {
+        return (castleFlags & BLACK_KINGSIDE) == BLACK_KINGSIDE;
+    }
+
+    public boolean whiteCastleQueenSide() {
+        return (castleFlags & WHITE_QUEENSIDE) == WHITE_QUEENSIDE;
+    }
+
+    public boolean blackCastleQueenSide() {
+        return (castleFlags & BLACK_QUEENSIDE) == BLACK_QUEENSIDE;
+    }
+
+    public boolean canCastleKingSide() {
+        if (whiteToMove) {
+            return whiteCastleKingSide();
+        }
+        else {
+            return blackCastleKingSide();
+        }
+    }
+
+    public boolean canCastleQueenSide() {
+        if (whiteToMove) {
+            return whiteCastleQueenSide();
+        }
+        else {
+            return blackCastleQueenSide();
+        }
     }
 }

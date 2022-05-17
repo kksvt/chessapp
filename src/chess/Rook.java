@@ -29,4 +29,39 @@ public class Rook extends Piece {
     public boolean isQueenSide() {
         return queenSide;
     }
+
+    public void commitMove(RealMove m, ChessPosition position) {
+        System.out.println("Rook moved - castling will be invalidated");
+        invalidateCastling(m, position);
+    }
+
+    public void commitCaptured(RealMove m, ChessPosition position) {
+        System.out.println("Rook got captured - castling will be invalidated");
+        invalidateCastling(m, position);
+    }
+
+    public void invalidateCastling(RealMove m, ChessPosition position) {
+        if (position.canCastleKingSide() || position.canCastleQueenSide()) {
+            if (this.isWhite()) {
+                if (position.whiteCastleKingSide() && this.isKingSide()) {
+                    m.flags |= MoveFlags.RM_WHITE_CASTLE_KINGSIDE_IMPOSSIBLE;
+                    position.castleFlags &= ~(position.WHITE_KINGSIDE);
+                }
+                if (position.whiteCastleQueenSide() && this.isQueenSide()) {
+                    m.flags |= MoveFlags.RM_WHITE_CASTLE_QUEENSIDE_IMPOSSIBLE;
+                    position.castleFlags &= ~(position.WHITE_QUEENSIDE);
+                }
+            }
+            else {
+                if (position.blackCastleKingSide() && this.isKingSide()) {
+                    m.flags |= MoveFlags.RM_BLACK_CASTLE_KINGSIDE_IMPOSSIBLE;
+                    position.castleFlags &= ~(position.BLACK_KINGSIDE);
+                }
+                if (position.blackCastleQueenSide() && this.isQueenSide()) {
+                    m.flags |= MoveFlags.RM_BLACK_CASTLE_QUEENSIDE_IMPOSSIBLE;
+                    position.castleFlags &= ~(position.BLACK_QUEENSIDE);
+                }
+            }
+        }
+    }
 }

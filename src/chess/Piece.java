@@ -41,4 +41,8 @@ public class Piece  {
 
     public boolean isWhite() { return Character.isUpperCase(sign); }
 
+    public void commitMove(RealMove m, ChessPosition position) {}
+
+    public void commitCaptured(RealMove m, ChessPosition position) {}
+
 }
