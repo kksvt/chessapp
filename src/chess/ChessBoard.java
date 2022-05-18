@@ -294,8 +294,8 @@ public class ChessBoard extends JPanel implements MouseListener, ActionListener 
                 move.arg = chessPosition.whiteToMove ? 'N' : 'n';
             }
         }
-        moveHistory.add(move);
         chessPosition.move(move);
+        moveHistory.add(move);
         movingSprites.add(new MovingSprite(sqrFrom, sqrTo, scaledPieces.get(sqrTo.link.getPiece().getSign())));
         if (MoveFlags.hasFlag(move.flags, MoveFlags.RM_CASTLE_KINGSIDE)) {
             int rank = move.getRankDestination(),
