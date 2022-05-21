@@ -1,7 +1,7 @@
 package chess;
 
-import java.awt.*;
-import java.util.*;
+import chess.pieces.Piece;
+
 import java.util.List;
 
 public class ChessSquare {

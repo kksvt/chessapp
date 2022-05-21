@@ -1,12 +1,16 @@
-package chess;
+package chess.pieces;
+
+import chess.ChessPosition;
+import chess.PieceMove;
 
 public class Pawn extends Piece {
 
-    Pawn(char sign) {
+    public Pawn(char sign) {
         super(sign);
-        this.value = ChessPosition.PAWN_VALUE;
-        this.canJump = false;
-        this.infinite = false;
+    }
+
+    @Override
+    void setMoves() {
         if (this.isWhite()) {
             //moves
             this.moves.add(new PieceMove(0, -2, false, false));
@@ -26,22 +30,19 @@ public class Pawn extends Piece {
             //fixme: add en passant
         }
     }
+
     public boolean canMove(int file, int rank, PieceMove m, ChessPosition position) {
         if (m.getVector().x == 0 && m.getVector().y == -2) {
-            if (rank != position.height - 2) {
+            if (rank != position.height() - 2) {
                 return false;
             }
-            if (rank - 1 < 0 || position.getPiece(file, rank - 1) != null) {
-                return false;
-            }
+            return rank - 1 >= 0 && position.getPiece(file, rank - 1) == null;
         }
         else if (m.getVector().x == 0 && m.getVector().y == 2) {
             if (rank != 1) {
                 return false;
             }
-            if (rank + 1 >= position.height || position.getPiece(file, rank + 1) != null) {
-                return false;
-            }
+            return rank + 1 < position.height() && position.getPiece(file, rank + 1) == null;
         }
         return true;
     }

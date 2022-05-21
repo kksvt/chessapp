@@ -1,22 +1,27 @@
-package chess;
+package chess.pieces;
+
+import chess.ChessPosition;
+import chess.MoveFlags;
+import chess.PieceMove;
+import chess.RealMove;
 
 public class Rook extends Piece {
     boolean kingSide;
     boolean queenSide;
 
-    Rook(char sign) {
+    public Rook(char sign) {
         super(sign);
-        this.value = ChessPosition.ROOK_VALUE;
-        this.canJump = false;
-        this.infinite = true;
-        //moves
+    }
+
+    @Override
+    void setMoves(){
         this.moves.add(new PieceMove(1, 0, true, false));
         this.moves.add(new PieceMove(-1, 0, true, false));
         this.moves.add(new PieceMove(0, 1, true, false));
         this.moves.add(new PieceMove(0, -1, true, false));
     }
 
-    Rook(char sign, boolean kingSide, boolean queenSide) {
+    public Rook(char sign, boolean kingSide, boolean queenSide) {
         this(sign);
         this.kingSide = kingSide;
         this.queenSide = queenSide;
@@ -47,21 +52,21 @@ public class Rook extends Piece {
             if (this.isWhite()) {
                 if (position.whiteCastleKingSide() && this.isKingSide()) {
                     m.flags |= MoveFlags.RM_WHITE_CASTLE_KINGSIDE_IMPOSSIBLE;
-                    position.castleFlags &= ~(position.WHITE_KINGSIDE);
+                    position.castleFlags &= ~(ChessPosition.WHITE_KINGSIDE);
                 }
                 if (position.whiteCastleQueenSide() && this.isQueenSide()) {
                     m.flags |= MoveFlags.RM_WHITE_CASTLE_QUEENSIDE_IMPOSSIBLE;
-                    position.castleFlags &= ~(position.WHITE_QUEENSIDE);
+                    position.castleFlags &= ~(ChessPosition.WHITE_QUEENSIDE);
                 }
             }
             else {
                 if (position.blackCastleKingSide() && this.isKingSide()) {
                     m.flags |= MoveFlags.RM_BLACK_CASTLE_KINGSIDE_IMPOSSIBLE;
-                    position.castleFlags &= ~(position.BLACK_KINGSIDE);
+                    position.castleFlags &= ~(ChessPosition.BLACK_KINGSIDE);
                 }
                 if (position.blackCastleQueenSide() && this.isQueenSide()) {
                     m.flags |= MoveFlags.RM_BLACK_CASTLE_QUEENSIDE_IMPOSSIBLE;
-                    position.castleFlags &= ~(position.BLACK_QUEENSIDE);
+                    position.castleFlags &= ~(ChessPosition.BLACK_QUEENSIDE);
                 }
             }
         }

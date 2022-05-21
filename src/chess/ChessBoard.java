@@ -1,14 +1,17 @@
 package chess;
 
+import chess.pieces.Piece;
+
 import javax.swing.*;
-import javax.swing.Timer;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
-import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Stack;
 
 class ChessVisualSquare extends JPanel {
     ChessSquare link;
@@ -174,7 +177,7 @@ public class ChessBoard extends JPanel implements MouseListener, ActionListener 
 
     final static ImageIcon invalidIcon = new ImageIcon("sprites/invalid.png");
 
-    public final static char pieceArr[] = new char[]{'P', 'B', 'N', 'R', 'Q', 'K', 'p', 'b', 'n', 'r', 'q', 'k'};
+    public final static char[] pieceArr = new char[]{'P', 'B', 'N', 'R', 'Q', 'K', 'p', 'b', 'n', 'r', 'q', 'k'};
 
     static ImageIcon getSpriteBySign(char sign) {
         switch (sign) {
@@ -216,7 +219,7 @@ public class ChessBoard extends JPanel implements MouseListener, ActionListener 
 
     Player white;
     Player black;
-    ChessVisualSquare squares[][];
+    ChessVisualSquare[][] squares;
     ChessPosition chessPosition;
     int squareSize;
     ChessVisualSquare selection; //currently selected square
@@ -274,7 +277,7 @@ public class ChessBoard extends JPanel implements MouseListener, ActionListener 
             squareSize = squares[0][0].getHeight();
             initAllSprites();
         }
-        for (ChessVisualSquare vr[] : squares) {
+        for (ChessVisualSquare[] vr : squares) {
             for (ChessVisualSquare r : vr) {
                 if (!r.link.isEmpty() && r.setupSprite(scaledPieces.get(r.link.getPiece().getSign()))) {
                     g.drawImage(r.getSprite(), r.getBoardPoint().x, r.getBoardPoint().y, null);
@@ -287,11 +290,11 @@ public class ChessBoard extends JPanel implements MouseListener, ActionListener 
         ChessVisualSquare sqrTo = squares[move.getRankDestination()][move.getFileDestination()],
                 sqrFrom = squares[move.getRankFrom()][move.getFileFrom()];
         if (MoveFlags.hasFlag(move.flags, MoveFlags.RM_PROMOTION)) {
-            if ((white.getIsHuman() && chessPosition.whiteToMove) ||
-                    (black.getIsHuman() && !chessPosition.whiteToMove)) {
+            if ((white.getIsHuman() && chessPosition.isWhiteToMove()) ||
+                    (black.getIsHuman() && !chessPosition.isWhiteToMove())) {
                 //todo select the promotion
                 System.out.println("Congratulations, you are automatically promoting to a knight!");
-                move.arg = chessPosition.whiteToMove ? 'N' : 'n';
+                move.arg = chessPosition.isWhiteToMove() ? 'N' : 'n';
             }
         }
         chessPosition.move(move);
@@ -299,23 +302,23 @@ public class ChessBoard extends JPanel implements MouseListener, ActionListener 
         movingSprites.add(new MovingSprite(sqrFrom, sqrTo, scaledPieces.get(sqrTo.link.getPiece().getSign())));
         if (MoveFlags.hasFlag(move.flags, MoveFlags.RM_CASTLE_KINGSIDE)) {
             int rank = move.getRankDestination(),
-                    file = chessPosition.rookPositionX[chessPosition.whiteToMove ? 1 : 0][0];
+                    file = chessPosition.rookPositionX[chessPosition.isWhiteToMove() ? 1 : 0][0];
             movingSprites.add(new MovingSprite(squares[rank][file],
-                    squares[rank][chessPosition.width - 3],
-                    scaledPieces.get(squares[rank][chessPosition.width - 3].link.getPiece().getSign())));
+                    squares[rank][chessPosition.width() - 3],
+                    scaledPieces.get(squares[rank][chessPosition.width() - 3].link.getPiece().getSign())));
         }
         else if (MoveFlags.hasFlag(move.flags, MoveFlags.RM_CASTLE_QUEENSIDE)) {
             int rank = move.getRankDestination(),
-                    file = chessPosition.rookPositionX[chessPosition.whiteToMove ? 1 : 0][1];
+                    file = chessPosition.rookPositionX[chessPosition.isWhiteToMove() ? 1 : 0][1];
             movingSprites.add(new MovingSprite(squares[rank][file],
                     squares[rank][3],
                     scaledPieces.get(squares[rank][3].link.getPiece().getSign())));
         }
         moveAnimTimer = new Timer(1, this);
         moveAnimTimer.start();
-        if (chessPosition.numLegalMoves == 0) {
+        if (chessPosition.getNumLegalMoves() == 0) {
             if (chessPosition.kingInCheck()) {
-                if (chessPosition.whiteToMove) {
+                if (chessPosition.isWhiteToMove()) {
                     System.out.println("Black wins!");
                 }
                 else {
@@ -359,6 +362,7 @@ public class ChessBoard extends JPanel implements MouseListener, ActionListener 
                 }
             }
             //move(selection, sqr);
+            //TODO: change so arg cannot be null
             move(move);
         }
         selection = null;
@@ -367,8 +371,8 @@ public class ChessBoard extends JPanel implements MouseListener, ActionListener 
                 r.unmarkAsLegalDestination();
             }
         }
-        if ((white.getIsHuman() && chessPosition.whiteToMove) ||
-                (black.getIsHuman() && !chessPosition.whiteToMove)) {
+        if ((white.getIsHuman() && chessPosition.isWhiteToMove()) ||
+                (black.getIsHuman() && !chessPosition.isWhiteToMove())) {
             Piece p = sqr.link.getPiece();
             if (p != null) {
                 selection = squares[sqr.link.getRank()][sqr.link.getFile()];

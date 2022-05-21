@@ -1,15 +1,15 @@
 package chess;
 
-import java.awt.*;
+import chess.pieces.Piece;
 
 //a move that happened on the board
 public class RealMove {
-    ChessSquare from;
-    ChessSquare to;
-    Piece fromPiece;
-    Piece toPiece;
-    int flags;
-    char arg;
+    public  ChessSquare from;
+    public  ChessSquare to;
+    public final Piece fromPiece;
+    public final Piece toPiece;
+    public int flags;
+    public char arg;
 
     public RealMove(ChessSquare from, ChessSquare to, int flags, char arg) {
         this.from = from;

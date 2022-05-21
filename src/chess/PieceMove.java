@@ -1,18 +1,19 @@
 package chess;
 
-import java.util.List;
 import java.awt.*;
 
 public class PieceMove {
     Point v;
-    boolean canCapture; //czy tym ruchem mozna zbic - wyjatek dla pionka
+    boolean canCapture;  //czy tym ruchem mozna zbic - wyjatek dla pionka
     boolean mustCapture; //czy tym ruchem trzeba zbic - rowniez wyjatek dla pionka
 
-    PieceMove(int x, int y, boolean canCapture, boolean mustCapture) {
+    public PieceMove(int x, int y, boolean canCapture, boolean mustCapture) {
         this.v = new Point(x, y);
         this.canCapture = canCapture;
         this.mustCapture = mustCapture;
     }
+
+
 
     public Point getVector() { return v; }
     public boolean isCanCapture() { return canCapture; }
