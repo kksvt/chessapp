@@ -1,12 +1,17 @@
-package chess;
+package chess.pieces;
+
+import chess.ChessPosition;
+import chess.MoveFlags;
+import chess.PieceMove;
+import chess.RealMove;
 
 public class King extends Piece {
-    King(char sign) {
+    public King(char sign) {
         super(sign);
-        this.value = Integer.MAX_VALUE;
-        this.canJump = false;
-        this.infinite = false;
-        //moves
+    }
+
+    @Override
+    void setMoves() {
         this.moves.add(new PieceMove(1, 1, true, false));
         this.moves.add(new PieceMove(1, -1, true, false));
         this.moves.add(new PieceMove(-1, 1, true, false));
@@ -19,8 +24,10 @@ public class King extends Piece {
         this.moves.add(new PieceMove(2, 0, false, false));
         this.moves.add(new PieceMove(-2, 0, false, false));
     }
+
+
     public boolean canMove(int file, int rank, PieceMove m, ChessPosition position) {
-        if (position.attackedSquares[rank + m.getVector().y][file + m.getVector().x]) {
+        if (position.isAttackedSquare(rank + m.getVector().y, file + m.getVector().x)) {
             return false;
         }
         int vx = m.getVector().x, vy = m.getVector().y;
@@ -38,11 +45,11 @@ public class King extends Piece {
                 if (!position.canCastleKingSide()) {
                     return false;
                 }
-                for (int x = file + 1; x < position.width - 1; ++x) {
-                    if (position.attackedSquares[rank][x]) {
+                for (int y = file + 1; y < position.width() - 1; ++y) {
+                    if (position.isAttackedSquare(rank,y)) {
                         return false;
                     }
-                    if (!position.squares[rank][x].isEmpty()) {
+                    if (!position.getSquare(rank,y).isEmpty()) {
                         return false;
                     }
                 }
@@ -53,11 +60,11 @@ public class King extends Piece {
                 if (!position.canCastleQueenSide()) {
                     return false;
                 }
-                for (int x = file - 1; x >= 2; --x) {
-                    if (position.attackedSquares[rank][x]) {
+                for (int y = file - 1; y >= 2; --y) {
+                    if (position.isAttackedSquare(rank,y)) {
                         return false;
                     }
-                    if (!position.squares[rank][x].isEmpty()) {
+                    if (!position.getSquare(rank,y).isEmpty()) {
                         return false;
                     }
                 }
@@ -87,16 +94,17 @@ public class King extends Piece {
         if (position.canCastleKingSide() || position.canCastleQueenSide()) {
             if (MoveFlags.hasFlag(m.flags, MoveFlags.RM_CASTLE_KINGSIDE) ||
                     MoveFlags.hasFlag(m.flags, MoveFlags.RM_CASTLE_QUEENSIDE)) {
-                m.to = position.squares[m.to.getRank()][MoveFlags.hasFlag(m.flags, MoveFlags.RM_CASTLE_KINGSIDE) ? position.width - 2 : 2]; //for 960 positions
+                m.to =  position.getSquare(m.to.getRank(),
+                        MoveFlags.hasFlag(m.flags, MoveFlags.RM_CASTLE_KINGSIDE) ? position.width() - 2 : 2); //for 960 positions // co tu sie dzieje :c
             }
-            if (position.whiteToMove) {
+            if (position.isWhiteToMove()) {
                 if (position.whiteCastleKingSide()) {
                     m.flags |= MoveFlags.RM_WHITE_CASTLE_KINGSIDE_IMPOSSIBLE;
                 }
                 if (position.whiteCastleQueenSide()) {
                     m.flags |= MoveFlags.RM_WHITE_CASTLE_QUEENSIDE_IMPOSSIBLE;
                 }
-                position.castleFlags &= ~(position.WHITE_KINGSIDE | position.WHITE_QUEENSIDE);
+                position.castleFlags &= ~(ChessPosition.WHITE_KINGSIDE | ChessPosition.WHITE_QUEENSIDE);
             } else {
                 if (position.blackCastleKingSide()) {
                     m.flags |= MoveFlags.RM_BLACK_CASTLE_KINGSIDE_IMPOSSIBLE;
@@ -104,7 +112,7 @@ public class King extends Piece {
                 if (position.blackCastleQueenSide()) {
                     m.flags |= MoveFlags.RM_BLACK_CASTLE_QUEENSIDE_IMPOSSIBLE;
                 }
-                position.castleFlags &= ~(position.BLACK_KINGSIDE | position.BLACK_QUEENSIDE);
+                position.castleFlags &= ~(ChessPosition.BLACK_KINGSIDE | ChessPosition.BLACK_QUEENSIDE);
             }
         }
     }

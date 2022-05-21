@@ -1,12 +1,14 @@
-package chess;
+package chess.pieces;
+
+import chess.PieceMove;
 
 public class Queen extends Piece {
-    Queen(char sign) {
+    public Queen(char sign) {
         super(sign);
-        this.value = ChessPosition.QUEEN_VALUE;
-        this.canJump = false;
-        this.infinite = true;
-        //moves
+    }
+
+    @Override
+    void setMoves(){
         this.moves.add(new PieceMove(1, 1, true, false));
         this.moves.add(new PieceMove(1, -1, true, false));
         this.moves.add(new PieceMove(-1, 1, true, false));

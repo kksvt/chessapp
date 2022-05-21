@@ -1,13 +1,15 @@
-package chess;
+package chess.pieces;
+
+import chess.PieceMove;
 
 public class Knight extends Piece {
 
-    Knight(char sign) {
+    public Knight(char sign) {
         super(sign);
-        this.value = ChessPosition.KNIGHT_VALUE;
-        this.canJump = true;
-        this.infinite = false;
-        //moves
+    }
+
+    @Override
+    void setMoves(){
         this.moves.add(new PieceMove(2, 1, true, false));
         this.moves.add(new PieceMove(2, -1, true, false));
         this.moves.add(new PieceMove(-2, 1, true, false));
