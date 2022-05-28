@@ -80,7 +80,7 @@ public class RealMove {
     }
 
     public ChessSquare to(){
-        return from;
+        return to;
     }
 
     public String getHumanMove() {

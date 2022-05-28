@@ -363,7 +363,7 @@ public class ChessBoard extends JPanel implements MouseListener, ActionListener 
         if (sqr.isLegalDestination() && selection != null) {
             RealMove move = null;
             for (RealMove mv : selection.link.legalMoves) {
-                if (mv.to() == sqr.link) {
+                if (mv.to().equals(sqr.link)) {
                     move = mv;
                     break;
                     //if there are multiple moves from the selected square to the same square then it's a promotion

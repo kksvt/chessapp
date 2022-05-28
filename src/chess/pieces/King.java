@@ -106,7 +106,7 @@ public class King extends Piece {
                 if (position.whiteCastleQueenSide()) {
                     m.setFlagsBitwise(MoveFlags.RM_WHITE_CASTLE_QUEENSIDE_IMPOSSIBLE);
                 }
-                position.castleFlags &= ~(ChessPosition.WHITE_KINGSIDE | ChessPosition.WHITE_QUEENSIDE);
+                position.setCastleFlags((ChessPosition.WHITE_KINGSIDE | ChessPosition.WHITE_QUEENSIDE));
             } else {
                 if (position.blackCastleKingSide()) {
                     m.setFlagsBitwise(MoveFlags.RM_BLACK_CASTLE_KINGSIDE_IMPOSSIBLE);
@@ -114,7 +114,7 @@ public class King extends Piece {
                 if (position.blackCastleQueenSide()) {
                     m.setFlagsBitwise(MoveFlags.RM_BLACK_CASTLE_QUEENSIDE_IMPOSSIBLE);
                 }
-                position.castleFlags &= ~(ChessPosition.BLACK_KINGSIDE | ChessPosition.BLACK_QUEENSIDE);
+                position.setCastleFlags((ChessPosition.BLACK_KINGSIDE | ChessPosition.BLACK_QUEENSIDE));
             }
         }
     }
