@@ -1,7 +1,7 @@
 package chess.pieces;
 
-import chess.ChessPosition;
-import chess.PieceMove;
+import chess.core.ChessPosition;
+import chess.core.PieceMove;
 
 public class Pawn extends Piece {
 

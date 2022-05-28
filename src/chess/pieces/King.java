@@ -1,9 +1,9 @@
 package chess.pieces;
 
-import chess.ChessPosition;
-import chess.MoveFlags;
-import chess.PieceMove;
-import chess.RealMove;
+import chess.core.ChessPosition;
+import chess.core.MoveFlags;
+import chess.core.PieceMove;
+import chess.core.RealMove;
 
 public class King extends Piece {
     public King(char sign) {
@@ -92,25 +92,27 @@ public class King extends Piece {
 
     public void commitMove(RealMove m, ChessPosition position) {
         if (position.canCastleKingSide() || position.canCastleQueenSide()) {
-            if (MoveFlags.hasFlag(m.flags, MoveFlags.RM_CASTLE_KINGSIDE) ||
-                    MoveFlags.hasFlag(m.flags, MoveFlags.RM_CASTLE_QUEENSIDE)) {
-                m.to =  position.getSquare(m.to.getRank(),
-                        MoveFlags.hasFlag(m.flags, MoveFlags.RM_CASTLE_KINGSIDE) ? position.width() - 2 : 2); //for 960 positions // co tu sie dzieje :c
+            if (MoveFlags.hasFlag(m.flags(), MoveFlags.RM_CASTLE_KINGSIDE) ||
+                MoveFlags.hasFlag(m.flags(), MoveFlags.RM_CASTLE_QUEENSIDE)) {
+
+                m.moveTo(position.getSquare(m.to().getRank(),
+                         MoveFlags.hasFlag( m.flags(),
+                                            MoveFlags.RM_CASTLE_KINGSIDE) ? position.width() - 2 : 2));  //for 960 positions // co tu sie dzieje :c
             }
             if (position.isWhiteToMove()) {
                 if (position.whiteCastleKingSide()) {
-                    m.flags |= MoveFlags.RM_WHITE_CASTLE_KINGSIDE_IMPOSSIBLE;
+                    m.setFlagsBitwise(MoveFlags.RM_WHITE_CASTLE_KINGSIDE_IMPOSSIBLE);
                 }
                 if (position.whiteCastleQueenSide()) {
-                    m.flags |= MoveFlags.RM_WHITE_CASTLE_QUEENSIDE_IMPOSSIBLE;
+                    m.setFlagsBitwise(MoveFlags.RM_WHITE_CASTLE_QUEENSIDE_IMPOSSIBLE);
                 }
                 position.castleFlags &= ~(ChessPosition.WHITE_KINGSIDE | ChessPosition.WHITE_QUEENSIDE);
             } else {
                 if (position.blackCastleKingSide()) {
-                    m.flags |= MoveFlags.RM_BLACK_CASTLE_KINGSIDE_IMPOSSIBLE;
+                    m.setFlagsBitwise(MoveFlags.RM_BLACK_CASTLE_KINGSIDE_IMPOSSIBLE);
                 }
                 if (position.blackCastleQueenSide()) {
-                    m.flags |= MoveFlags.RM_BLACK_CASTLE_QUEENSIDE_IMPOSSIBLE;
+                    m.setFlagsBitwise(MoveFlags.RM_BLACK_CASTLE_QUEENSIDE_IMPOSSIBLE);
                 }
                 position.castleFlags &= ~(ChessPosition.BLACK_KINGSIDE | ChessPosition.BLACK_QUEENSIDE);
             }

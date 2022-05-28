@@ -1,4 +1,4 @@
-package chess;
+package chess.core;
 
 public class MoveFlags {
     public final static int RM_PROMOTION = 1;

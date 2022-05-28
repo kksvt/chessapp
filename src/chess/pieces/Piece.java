@@ -1,8 +1,8 @@
 package chess.pieces;
 
-import chess.ChessPosition;
-import chess.PieceMove;
-import chess.RealMove;
+import chess.core.ChessPosition;
+import chess.core.PieceMove;
+import chess.core.RealMove;
 
 import java.util.ArrayList;
 import java.util.List;

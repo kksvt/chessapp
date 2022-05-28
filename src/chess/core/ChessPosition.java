@@ -1,4 +1,4 @@
-package chess;
+package chess.core;
 
 import chess.pieces.*;
 
@@ -300,7 +300,7 @@ public class ChessPosition {
         for (PieceMove pm : s.getPiece().getMoves()) {
             x = s.getFile() + pm.getVector().x;
             y = s.getRank() + pm.getVector().y;
-            while (x >= 0 && x < width &&
+            while ( x >= 0 && x < width &&
                     y >= 0 && y < height &&
                     pm.canMove(this, s)) {
                 Piece target = getPiece(x, y);
@@ -383,40 +383,40 @@ public class ChessPosition {
     }
 
     public boolean move(RealMove move) {
-        move.fromPiece.commitMove(move, this);
-        if (move.toPiece != null) {
-            move.toPiece.commitCaptured(move, this);
-            move.to.removePiece();
+        move.fromPiece().commitMove(move, this);
+        if (move.toPiece() != null) {
+            move.toPiece().commitCaptured(move, this);
+            move.to().removePiece();
         }
-        if (MoveFlags.hasFlag(move.flags, MoveFlags.RM_PROMOTION)) {
-            switch (Character.toLowerCase(move.arg)) {
+        if (MoveFlags.hasFlag(move.flags(), MoveFlags.RM_PROMOTION)) {
+            switch (Character.toLowerCase(move.getArg())) {
                 case 'b':
-                    move.to.piece = new Bishop(move.arg);
+                    move.to().piece = new Bishop(move.getArg());
                     break;
                 case 'n':
-                    move.to.piece = new Knight(move.arg);
+                    move.to().piece = new Knight(move.getArg());
                     break;
                 case 'r':
-                    move.to.piece = new Rook(move.arg);
+                    move.to().piece = new Rook(move.getArg());
                     break;
                 default:
-                    move.to.piece = new Queen(move.arg);
+                    move.to().piece = new Queen(move.getArg());
                     break;
             }
         } else {
-            move.to.piece = move.fromPiece;
+            move.to().piece = move.fromPiece();
         }
-        move.from.removePiece();
-        if (MoveFlags.hasFlag(move.flags, MoveFlags.RM_CASTLE_KINGSIDE)) {
-            move(new RealMove(squares[move.from.getRank()][rookPositionX[whiteToMove ? 1 : 0][0]],
-                    squares[move.from.getRank()][width - 3],
+        move.from().removePiece();
+        if (MoveFlags.hasFlag(move.flags(), MoveFlags.RM_CASTLE_KINGSIDE)) {
+            move(new RealMove(squares[move.from().getRank()][rookPositionX[whiteToMove ? 1 : 0][0]],
+                    squares[move.from().getRank()][width - 3],
                     MoveFlags.RM_ROOK_CASTLING));
-        } else if (MoveFlags.hasFlag(move.flags, MoveFlags.RM_CASTLE_QUEENSIDE)) {
-            move(new RealMove(squares[move.from.getRank()][rookPositionX[whiteToMove ? 1 : 0][1]],
-                    squares[move.from.getRank()][3],
+        } else if (MoveFlags.hasFlag(move.flags(), MoveFlags.RM_CASTLE_QUEENSIDE)) {
+            move(new RealMove(squares[move.from().getRank()][rookPositionX[whiteToMove ? 1 : 0][1]],
+                    squares[move.from().getRank()][3],
                     MoveFlags.RM_ROOK_CASTLING));
         }
-        if (!MoveFlags.hasFlag(move.flags, MoveFlags.RM_ROOK_CASTLING)) {
+        if (!MoveFlags.hasFlag(move.flags(), MoveFlags.RM_ROOK_CASTLING)) {
             whiteToMove = !whiteToMove;
             calculateLegalMoves();
         }
@@ -424,49 +424,49 @@ public class ChessPosition {
     }
 
     public boolean undoMove(RealMove move) {
-        if (!move.to.isEmpty()) {
-            move.to.removePiece();
+        if (!move.to().isEmpty()) {
+            move.to().removePiece();
         }
-        if (!move.from.isEmpty()) {
-            move.from.removePiece();
+        if (!move.from().isEmpty()) {
+            move.from().removePiece();
         }
-        if (move.fromPiece != null) {
-            move.from.piece = move.fromPiece;
+        if (move.fromPiece() != null) {
+            move.from().piece = move.fromPiece();
         }
-        if (move.toPiece != null) {
-            move.to.piece = move.toPiece;
+        if (move.toPiece() != null) {
+            move.to().piece = move.toPiece();
         }
-        if (MoveFlags.hasFlag(move.flags, MoveFlags.RM_WHITE_CASTLE_KINGSIDE_IMPOSSIBLE)) {
+        if (MoveFlags.hasFlag(move.flags(), MoveFlags.RM_WHITE_CASTLE_KINGSIDE_IMPOSSIBLE)) {
             castleFlags |= WHITE_KINGSIDE;
         }
-        if (MoveFlags.hasFlag(move.flags, MoveFlags.RM_WHITE_CASTLE_QUEENSIDE_IMPOSSIBLE)) {
+        if (MoveFlags.hasFlag(move.flags(), MoveFlags.RM_WHITE_CASTLE_QUEENSIDE_IMPOSSIBLE)) {
             castleFlags |= WHITE_QUEENSIDE;
         }
-        if (MoveFlags.hasFlag(move.flags, MoveFlags.RM_BLACK_CASTLE_KINGSIDE_IMPOSSIBLE)) {
+        if (MoveFlags.hasFlag(move.flags(), MoveFlags.RM_BLACK_CASTLE_KINGSIDE_IMPOSSIBLE)) {
             castleFlags |= BLACK_KINGSIDE;
         }
-        if (MoveFlags.hasFlag(move.flags, MoveFlags.RM_BLACK_CASTLE_QUEENSIDE_IMPOSSIBLE)) {
+        if (MoveFlags.hasFlag(move.flags(), MoveFlags.RM_BLACK_CASTLE_QUEENSIDE_IMPOSSIBLE)) {
             castleFlags |= BLACK_QUEENSIDE;
         }
         //restoring the rook after undoing castling
-        if (MoveFlags.hasFlag(move.flags, MoveFlags.RM_CASTLE_KINGSIDE)) {
+        if (MoveFlags.hasFlag(move.flags(), MoveFlags.RM_CASTLE_KINGSIDE)) {
             if (!whiteToMove) {
-                move(new RealMove(squares[move.from.getRank()][width - 3],
-                        squares[move.from.getRank()][rookPositionX[1][0]],
+                move(new RealMove(squares[move.from().getRank()][width - 3],
+                        squares[move.from().getRank()][rookPositionX[1][0]],
                         MoveFlags.RM_ROOK_CASTLING));
             } else {
-                move(new RealMove(squares[move.from.getRank()][width - 3],
-                        squares[move.from.getRank()][rookPositionX[0][0]],
+                move(new RealMove(squares[move.from().getRank()][width - 3],
+                        squares[move.from().getRank()][rookPositionX[0][0]],
                         MoveFlags.RM_ROOK_CASTLING));
             }
-        } else if (MoveFlags.hasFlag(move.flags, MoveFlags.RM_CASTLE_QUEENSIDE)) {
+        } else if (MoveFlags.hasFlag(move.flags(), MoveFlags.RM_CASTLE_QUEENSIDE)) {
             if (!whiteToMove) {
-                move(new RealMove(squares[move.from.getRank()][3],
-                        squares[move.from.getRank()][rookPositionX[1][1]],
+                move(new RealMove(squares[move.from().getRank()][3],
+                        squares[move.from().getRank()][rookPositionX[1][1]],
                         MoveFlags.RM_ROOK_CASTLING));
             } else {
-                move(new RealMove(squares[move.from.getRank()][3],
-                        squares[move.from.getRank()][rookPositionX[0][1]],
+                move(new RealMove(squares[move.from().getRank()][3],
+                        squares[move.from().getRank()][rookPositionX[0][1]],
                         MoveFlags.RM_ROOK_CASTLING));
             }
         }

@@ -1,6 +1,6 @@
 package chess.pieces;
 
-import chess.PieceMove;
+import chess.core.PieceMove;
 
 public class Bishop extends Piece {
     public Bishop(char sign) {
