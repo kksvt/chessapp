@@ -23,7 +23,7 @@ public class ChessPosition {
     private ChessSquare[][] squares;
     private boolean whiteToMove;
 
-    public int castleFlags; //TODO: figure out how to make this private
+    private int castleFlags;
 
     private int numLegalMoves;
     private boolean whiteCheck;
@@ -96,6 +96,9 @@ public class ChessPosition {
     }
 
     public boolean parsePosition(String position) {
+        if(position==null)
+            return false;
+
         whiteToMove = true;
         int enPassant;
         int halfMove;
@@ -524,5 +527,9 @@ public class ChessPosition {
         } else {
             return blackCastleQueenSide();
         }
+    }
+
+    public void setCastleFlags(int flags){
+        castleFlags &= ~ (flags);
     }
 }

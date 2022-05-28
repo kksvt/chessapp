@@ -52,21 +52,21 @@ public class Rook extends Piece {
             if (this.isWhite()) {
                 if (position.whiteCastleKingSide() && this.isKingSide()) {
                     m.setFlagsBitwise(MoveFlags.RM_WHITE_CASTLE_KINGSIDE_IMPOSSIBLE);
-                    position.castleFlags &= ~(ChessPosition.WHITE_KINGSIDE);
+                    position.setCastleFlags(ChessPosition.WHITE_KINGSIDE);
                 }
                 if (position.whiteCastleQueenSide() && this.isQueenSide()) {
                     m.setFlagsBitwise(MoveFlags.RM_WHITE_CASTLE_QUEENSIDE_IMPOSSIBLE);
-                    position.castleFlags &= ~(ChessPosition.WHITE_QUEENSIDE);
+                    position.setCastleFlags(ChessPosition.WHITE_QUEENSIDE);
                 }
             }
             else {
                 if (position.blackCastleKingSide() && this.isKingSide()) {
                     m.setFlagsBitwise(MoveFlags.RM_BLACK_CASTLE_KINGSIDE_IMPOSSIBLE);
-                    position.castleFlags &= ~(ChessPosition.BLACK_KINGSIDE);
+                    position.setCastleFlags(ChessPosition.BLACK_KINGSIDE);
                 }
                 if (position.blackCastleQueenSide() && this.isQueenSide()) {
                     m.setFlagsBitwise(MoveFlags.RM_BLACK_CASTLE_QUEENSIDE_IMPOSSIBLE);
-                    position.castleFlags &= ~(ChessPosition.BLACK_QUEENSIDE);
+                    position.setCastleFlags(ChessPosition.BLACK_QUEENSIDE);
                 }
             }
         }

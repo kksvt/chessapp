@@ -37,7 +37,7 @@ public abstract class Piece  {
             return -1; // TODO: choose correct exception
         switch (Character.toLowerCase(piece)) {
             case 'k':
-                return Integer.MAX_VALUE; //TODO: choose where (and if) it would be needed
+                return Integer.MAX_VALUE;
             case 'q':
                 return QUEEN_VALUE;
             case 'r':
