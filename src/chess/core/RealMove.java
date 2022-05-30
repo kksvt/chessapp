@@ -11,6 +11,7 @@ public class RealMove {
     private final Piece toPiece;
     private int flags;
     private char arg;
+    private int enPassant[]; //fixme: is there a better way?
 
     public RealMove(ChessSquare from, ChessSquare to, int flags, char arg) {
         this.from = from;
@@ -43,6 +44,22 @@ public class RealMove {
 
     public int getRankFrom() {
         return from.getRank();
+    }
+
+    public void setEnPassant(int file, int rank) {
+        this.enPassant = new int[2];
+        this.enPassant[0] = file;
+        this.enPassant[1] = rank;
+    }
+
+    public void setEnPassant(int enPassant[]) {
+        this.enPassant = new int[2];
+        this.enPassant[0] = enPassant[0];
+        this.enPassant[1] = enPassant[1];
+    }
+
+    public int[] getEnPassant() {
+        return enPassant;
     }
 
 //  ==============================================  GETTERS AND SETTERS ================================================

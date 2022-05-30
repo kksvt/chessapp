@@ -230,17 +230,12 @@ public class ChessBoard extends JPanel implements MouseListener, ActionListener 
     private ChessVisualSquare selection; //currently selected square
     //animating the move
     private Timer moveAnimTimer;
-    //Point moveDest;
-    //Point moveVel;
-    //ChessVisualSquare movingSprite;
     private List<MovingSprite> movingSprites;
 
-    //List<RealMove> moveHistory;
     private Stack<RealMove> moveHistory;
 
     private void initAllSprites() {
         this.scaledPieces = new HashMap<Character, Image>();
-        //this.scaledPieces.put('P', getResizedSprite(ChessBoard.getSpriteBySign((this.link.getPiece().getSign())), this.getPreferredSize().height).getImage())
         for (char piece : pieceArr) {
             this.scaledPieces.put(piece, getResizedSprite(PieceIcons.getSpriteBySign(piece), squareSize).getImage());
         }
@@ -248,7 +243,7 @@ public class ChessBoard extends JPanel implements MouseListener, ActionListener 
 
     ChessBoard(int width, int height, int squareSize, Color lightSquare, Color darkSquare, Player white, Player black) {
         this.setLayout(new GridLayout(width, height, 0, 0));
-        chessPosition = new ChessPosition(width, height, ChessPosition.defaultPosition);
+        chessPosition = new ChessPosition(width, height, ChessPosition.defaultPosition);//"4k3/4p3/8/2K2P1r/8/8/8/R7 w - - 0 1");//"4k3/4p3/8/2KP3r/8/8/8/R7 w - - 0 1");//
         this.squareSize = squareSize;
         this.white = white;
         this.black = black;

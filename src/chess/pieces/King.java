@@ -21,8 +21,8 @@ public class King extends Piece {
         this.moves.add(new PieceMove(0, 1, true, false));
         this.moves.add(new PieceMove(0, -1, true, false));
         //castling
-        this.moves.add(new PieceMove(2, 0, false, false));
-        this.moves.add(new PieceMove(-2, 0, false, false));
+        this.moves.add(new PieceMove(2, 0, false, false, MoveFlags.RM_CASTLE_KINGSIDE));
+        this.moves.add(new PieceMove(-2, 0, false, false, MoveFlags.RM_CASTLE_QUEENSIDE));
     }
 
 
@@ -30,19 +30,26 @@ public class King extends Piece {
         if (position.isAttackedSquare(rank + m.getVector().y, file + m.getVector().x)) {
             return false;
         }
-        int vx = m.getVector().x, vy = m.getVector().y;
+        //int vx = m.getVector().x, vy = m.getVector().y;
         //castling
-        if (Math.abs(vx) == 2 && vy == 0) {
+        //if (Math.abs(vx) == 2 && vy == 0) {
+        if (MoveFlags.hasFlag(m.flags(), MoveFlags.RM_CASTLE_KINGSIDE) ||
+        MoveFlags.hasFlag(m.flags(), MoveFlags.RM_CASTLE_QUEENSIDE)) {
             if (position.kingInCheck()) {
                 return false;
             }
-            //[0][0] = black queenside rook
-            //[0][1] = black kingside rook
-            //[1][0] = white queenside rook
-            //[1][1] = white kingside rook
+            //safety measures in case of a messed up FEN
+            if ((isWhite() && rank != position.height() - 1) ||
+                    (!isWhite() && rank != 0)) {
+                return false;
+            }
             //kingside
-            if (vx == 2) {
+            if (MoveFlags.hasFlag(m.flags(), MoveFlags.RM_CASTLE_KINGSIDE)) {
                 if (!position.canCastleKingSide()) {
+                    return false;
+                }
+                if ((isWhite() && position.getWhiteKingsideRookFile() == -1) ||
+                        (!isWhite() && position.getBlackKingsideRookFile() == -1)) {
                     return false;
                 }
                 for (int y = file + 1; y < position.width() - 1; ++y) {
@@ -58,6 +65,10 @@ public class King extends Piece {
             //queenside
             else {
                 if (!position.canCastleQueenSide()) {
+                    return false;
+                }
+                if ((isWhite() && position.getWhiteQueensideRookFile() == -1) ||
+                    (!isWhite() && position.getBlackQueensideRookFile() == -1)) {
                     return false;
                 }
                 for (int y = file - 1; y >= 2; --y) {
