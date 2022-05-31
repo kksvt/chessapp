@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Stack;
+import java.util.concurrent.TimeUnit;
 
 class ChessVisualSquare extends JPanel {
     ChessSquare link;
@@ -243,11 +244,11 @@ public class ChessBoard extends JPanel implements MouseListener, ActionListener 
 
     ChessBoard(int width, int height, int squareSize, Color lightSquare, Color darkSquare, Player white, Player black) {
         this.setLayout(new GridLayout(width, height, 0, 0));
-        chessPosition = new ChessPosition(width, height, ChessPosition.defaultPosition);//"4k3/4p3/8/2K2P1r/8/8/8/R7 w - - 0 1");//"4k3/4p3/8/2KP3r/8/8/8/R7 w - - 0 1");//
+        chessPosition = new ChessPosition(width, height, ChessPosition.defaultPosition);
         this.squareSize = squareSize;
         this.white = white;
         this.black = black;
-        this.squares = new ChessVisualSquare[width][height];
+        this.squares = new ChessVisualSquare[height][width];
         this.initAllSprites();
         this.selection = null;
         this.moveHistory = new Stack<RealMove>();
@@ -294,8 +295,7 @@ public class ChessBoard extends JPanel implements MouseListener, ActionListener 
                 (black.getIsHuman() && !chessPosition.isWhiteToMove())) {
 
                 //todo select the promotion
-                System.out.println("Congratulations, you are automatically promoting to a knight!");
-                move.setArg(chessPosition.isWhiteToMove() ? 'N' : 'n');
+                move.setArg(chessPosition.isWhiteToMove() ? 'B' : 'b');
             }
         }
 
@@ -394,6 +394,31 @@ public class ChessBoard extends JPanel implements MouseListener, ActionListener 
         this.repaint();
     }
 
+    //perft test - fixme: move to tests/
+    private class TestPerft {
+        private String fen;
+        private int minDepth;
+        private int maxDepth;
+
+        public TestPerft(String fen, int minDepth, int maxDepth) {
+            this.fen = fen;
+            this.minDepth = minDepth;
+            this.maxDepth = maxDepth;
+        }
+
+        public String getFen() {
+            return fen;
+        }
+
+        public int getMaxDepth() {
+            return maxDepth;
+        }
+
+        public int getMinDepth() {
+            return minDepth;
+        }
+    }
+
     @Override
     public void mousePressed(MouseEvent e) {
         if (e.getButton() == 3) {
@@ -403,6 +428,88 @@ public class ChessBoard extends JPanel implements MouseListener, ActionListener 
                 this.repaint();
             }
         }
+        if (e.getButton() == 2) {
+            //perft test - fixme: move to tests/
+            TestPerft tests[] = new TestPerft[5];
+            tests[0] = new TestPerft("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 1, 6);
+            tests[1] = new TestPerft("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -", 1, 5);
+            tests[2] = new TestPerft("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -", 1, 6);
+            tests[3] = new TestPerft("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1", 1, 5);
+            tests[4] = new TestPerft("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8", 1, 5);
+            for (TestPerft t : tests) {
+                System.out.println("Test: " + t.getFen());
+                chessPosition.parsePosition(t.getFen());
+                for (int i = t.getMinDepth(); i <= t.getMaxDepth(); ++i) {
+                    System.out.println("For depth " + i + " there are " + perft(i, i, false) + " nodes");
+                }
+            }
+            System.out.println("The end");
+        }
+    }
+
+    public void printMove(RealMove rm) {
+        System.out.print(Character.toString(rm.getFileFrom() + 'a') + "" + Character.toString(8 - rm.getRankFrom() + '0'));
+        System.out.print(Character.toString(rm.getFileDestination() + 'a') + "" + Character.toString(8 - rm.getRankDestination() + '0') );
+        System.out.print(rm.getArg() != '\0' ? rm.getArg() : "");
+    }
+
+    /*
+    Test: rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+    For depth 1 there are 20 nodes
+    For depth 2 there are 400 nodes
+    For depth 3 there are 8902 nodes
+    For depth 4 there are 197281 nodes
+    For depth 5 there are 4865609 nodes
+    For depth 6 there are 119060324 nodes
+
+    Test: r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -
+    For depth 1 there are 48 nodes
+    For depth 2 there are 2039 nodes
+    For depth 3 there are 97862 nodes
+    For depth 4 there are 4085603 nodes
+    For depth 5 there are 193690690 nodes
+
+    Test: 8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -
+    For depth 1 there are 14 nodes
+    For depth 2 there are 191 nodes
+    For depth 3 there are 2812 nodes
+    For depth 4 there are 43238 nodes
+    For depth 5 there are 674624 nodes
+    For depth 6 there are 11030083 nodes
+
+    Test: r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1
+    For depth 1 there are 6 nodes
+    For depth 2 there are 264 nodes
+    For depth 3 there are 9467 nodes
+    For depth 4 there are 422333 nodes
+    For depth 5 there are 15833292 nodes
+
+    Test: rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8
+    For depth 1 there are 44 nodes
+    For depth 2 there are 1486 nodes
+    For depth 3 there are 62379 nodes
+    For depth 4 there are 2103487 nodes
+    For depth 5 there are 89941194 nodes
+    The end*/
+    //fixme: move to tests
+    public int perft(int startDepth, int depth, boolean printMoves) {
+        if (depth == 0) {
+            return 1;
+        }
+        int total = 0;
+        for (RealMove mv : chessPosition.getAllMoves()) {
+            if (depth == startDepth && printMoves) {
+                printMove(mv);
+            }
+            chessPosition.move(mv);
+            int addTotal = perft(startDepth,depth - 1, printMoves);
+            if (depth == startDepth && printMoves) {
+                System.out.println(": " + addTotal);
+            }
+            total += addTotal;
+            chessPosition.undoMove(mv);
+        }
+        return total;
     }
 
     @Override

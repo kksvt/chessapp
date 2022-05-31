@@ -63,7 +63,7 @@ public class Pawn extends Piece {
     public void commitMove(RealMove m, ChessPosition position) {
         if (MoveFlags.hasFlag(m.flags(), MoveFlags.RM_TWOSQRPAWN)) {
             position.setEnPassant(m.from().getFile(), m.to().getRank() + (isWhite() ? 1 : -1));
-            System.out.println("En passant is set to " + Character.toString(position.getEnPassant()[0] + 'a') + "" + (position.height() - position.getEnPassant()[1]));
+            //System.out.println("En passant is set to " + Character.toString(position.getEnPassant()[0] + 'a') + "" + (position.height() - position.getEnPassant()[1]));
         }
         else if (MoveFlags.hasFlag(m.flags(), MoveFlags.RM_ENPASSANT)) {
             ChessSquare sqr = position.getSquare(position.getEnPassant()[1] + (isWhite() ? 1 : -1), position.getEnPassant()[0]);

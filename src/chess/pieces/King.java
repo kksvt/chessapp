@@ -71,8 +71,8 @@ public class King extends Piece {
                     (!isWhite() && position.getBlackQueensideRookFile() == -1)) {
                     return false;
                 }
-                for (int y = file - 1; y >= 2; --y) {
-                    if (position.isAttackedSquare(rank,y)) {
+                for (int y = file - 1; y > 0; --y) {
+                    if (y > 1 && position.isAttackedSquare(rank,y)) {
                         return false;
                     }
                     if (!position.getSquare(rank,y).isEmpty()) {
@@ -102,32 +102,35 @@ public class King extends Piece {
     }
 
     public void commitMove(RealMove m, ChessPosition position) {
-        if (position.canCastleKingSide() || position.canCastleQueenSide()) {
-            if (MoveFlags.hasFlag(m.flags(), MoveFlags.RM_CASTLE_KINGSIDE) ||
-                MoveFlags.hasFlag(m.flags(), MoveFlags.RM_CASTLE_QUEENSIDE)) {
-
-                m.moveTo(position.getSquare(m.to().getRank(),
-                         MoveFlags.hasFlag( m.flags(),
-                                            MoveFlags.RM_CASTLE_KINGSIDE) ? position.width() - 2 : 2));  //for 960 positions // co tu sie dzieje :c
+        if (this.isWhite()) {
+            if (position.whiteCastleKingSide()) {
+                if (MoveFlags.hasFlag(m.flags(), MoveFlags.RM_CASTLE_KINGSIDE)) {
+                    m.moveTo(position.getSquare(m.to().getRank(), position.width() - 2));  //for 960 positions // co tu sie dzieje :c
+                }
+                m.setFlagsBitwise(MoveFlags.RM_WHITE_CASTLE_KINGSIDE_IMPOSSIBLE);
             }
-            if (position.isWhiteToMove()) {
-                if (position.whiteCastleKingSide()) {
-                    m.setFlagsBitwise(MoveFlags.RM_WHITE_CASTLE_KINGSIDE_IMPOSSIBLE);
+            if (position.whiteCastleQueenSide()) {
+                if (MoveFlags.hasFlag(m.flags(), MoveFlags.RM_CASTLE_QUEENSIDE)) {
+                    m.moveTo(position.getSquare(m.to().getRank(), 2));  //for 960 positions // co tu sie dzieje :c
                 }
-                if (position.whiteCastleQueenSide()) {
-                    m.setFlagsBitwise(MoveFlags.RM_WHITE_CASTLE_QUEENSIDE_IMPOSSIBLE);
-                }
-                position.setCastleFlags((ChessPosition.WHITE_KINGSIDE | ChessPosition.WHITE_QUEENSIDE));
-            } else {
-                if (position.blackCastleKingSide()) {
-                    m.setFlagsBitwise(MoveFlags.RM_BLACK_CASTLE_KINGSIDE_IMPOSSIBLE);
-                }
-                if (position.blackCastleQueenSide()) {
-                    m.setFlagsBitwise(MoveFlags.RM_BLACK_CASTLE_QUEENSIDE_IMPOSSIBLE);
-                }
-                position.setCastleFlags((ChessPosition.BLACK_KINGSIDE | ChessPosition.BLACK_QUEENSIDE));
+                m.setFlagsBitwise(MoveFlags.RM_WHITE_CASTLE_QUEENSIDE_IMPOSSIBLE);
             }
+            position.setCastleFlags((ChessPosition.WHITE_KINGSIDE | ChessPosition.WHITE_QUEENSIDE));
+        }
+        else {
+            if (position.blackCastleKingSide()) {
+                if (MoveFlags.hasFlag(m.flags(), MoveFlags.RM_CASTLE_KINGSIDE)) {
+                    m.moveTo(position.getSquare(m.to().getRank(), position.width() - 2));  //for 960 positions // co tu sie dzieje :c
+                }
+                m.setFlagsBitwise(MoveFlags.RM_BLACK_CASTLE_KINGSIDE_IMPOSSIBLE);
+            }
+            if (position.blackCastleQueenSide()) {
+                if (MoveFlags.hasFlag(m.flags(), MoveFlags.RM_CASTLE_QUEENSIDE)) {
+                    m.moveTo(position.getSquare(m.to().getRank(), 2));  //for 960 positions // co tu sie dzieje :c
+                }
+                m.setFlagsBitwise(MoveFlags.RM_BLACK_CASTLE_QUEENSIDE_IMPOSSIBLE);
+            }
+            position.setCastleFlags((ChessPosition.BLACK_KINGSIDE | ChessPosition.BLACK_QUEENSIDE));
         }
     }
-
 }

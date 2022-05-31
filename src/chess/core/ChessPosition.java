@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ChessPosition {
-    String fen = "";
+    StringBuilder fen;
     public final static String defaultPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
     public final static int WHITE_KINGSIDE = 1;
@@ -36,7 +36,9 @@ public class ChessPosition {
     private int enPassant[];
     private boolean enPassantPinned;
     private int halfMove;
-    private int fullMove;
+    private int fullMove; //its actually 2 * fullMove
+
+    private List<RealMove> allLegalMoves;
 
     ChessPosition(int width, int height, String position) {
         this.width = width;
@@ -93,7 +95,7 @@ public class ChessPosition {
         return height;
     }
 
-    public String getFen() {
+    public StringBuilder getFen() {
         return fen;
     }
 
@@ -122,8 +124,128 @@ public class ChessPosition {
             if (Character.isSpaceChar(c)) {
                 continue;
             } else if (rank == height - 1 && file == width) {
-                //todo
-                castleFlags = (BLACK_KINGSIDE | BLACK_QUEENSIDE | WHITE_KINGSIDE | WHITE_QUEENSIDE);
+                //b KQkq e3 0 1
+                //w KQkq - 0 1
+                //w - - 0 1
+                //move turn
+                switch (c) {
+                    case 'w':
+                        whiteToMove = true;
+                        //System.out.println("White to move");
+                        break;
+                    case 'b':
+                        whiteToMove = false;
+                        //System.out.println("Black to move");
+                        break;
+                    default:
+                        return false;
+                }
+                ++i;
+                while (i < position.length() && position.charAt(i) == ' ') { ++i; }
+                if (i == position.length()) {
+                    return false;
+                }
+                //castling
+                if (position.charAt(i) == '-') {
+                    ++i;
+                    while (i < position.length() && position.charAt(i) == ' ') { ++i; }
+                    if (i == position.length()) {
+                        return false;
+                    }
+                }
+                else {
+                    while (i < position.length()) {
+                        switch (position.charAt(i)) {
+                            case 'K':
+                                if (rookPositionX[1][1] != -1) { //fixme: these may not be sufficient, store the rook's rank as well?
+                                    castleFlags |= WHITE_KINGSIDE;
+                                    //System.out.println("parsePosition: White can castle kingside");
+                                }
+                                break;
+                            case 'Q':
+                                if (rookPositionX[1][0] != -1) {
+                                    castleFlags |= WHITE_QUEENSIDE;
+                                    //System.out.println("parsePosition: White can castle queenside");
+                                }
+                                break;
+                            case 'k':
+                                if (rookPositionX[0][1] != -1) {
+                                    castleFlags |= BLACK_KINGSIDE;
+                                    //System.out.println("parsePosition: Black can castle kingside");
+                                }
+                                break;
+                            case 'q':
+                                if (rookPositionX[0][0] != -1) {
+                                    castleFlags |= BLACK_QUEENSIDE;
+                                    //System.out.println("parsePosition: Black can castle kingside");
+                                }
+                                break;
+                            case ' ':
+                                break;
+                            default:
+                                return false;
+                        }
+                        if (position.charAt(i) == ' ') {
+                            break;
+                        }
+                        ++i;
+                    }
+                }
+                while (i < position.length() && position.charAt(i) == ' ') { ++i; }
+                if (i == position.length()) {
+                    return false;
+                }
+                //en passant
+                if (position.charAt(i) == '-') {
+                    //System.out.println("No en passant");
+                    ++i;
+                    while (i < position.length() && position.charAt(i) == ' ') { ++i; }
+                    if (i == position.length()) {
+                        halfMove = 0;
+                        fullMove = 2;
+                        break;
+                    }
+                }
+                else {
+                    if (i + 1 >= position.length()) {
+                        return false;
+                    }
+                    int enPassantFile = position.charAt(i) - 'a', enPassantRank = position.charAt(i + 1);
+                    if (enPassantFile < 0 || enPassantFile >= width || enPassantRank < 0 || enPassantRank >= height) {
+                        return false;
+                    }
+                    //System.out.println("En passant is at " + position.charAt(i) + position.charAt(i + 1));
+                    setEnPassant(enPassantFile, enPassantRank);
+                    i += 2;
+                }
+                while (i < position.length() && position.charAt(i) == ' ') { ++i; }
+                if (i == position.length()) {
+                    halfMove = 0;
+                    fullMove = 2;
+                    break;
+                }
+                //halfmove
+                halfMove = 0;
+                while (i < position.length() && Character.isDigit(position.charAt(i))) {
+                    halfMove *= 10;
+                    halfMove = position.charAt(i) - '0';
+                    ++i;
+                }
+                while (i < position.length() && position.charAt(i) == ' ') { ++i; }
+                if (i == position.length()) {
+                    fullMove = 2;
+                    break;
+                }
+                //fullmove
+                fullMove = 0;
+                while (i < position.length() && Character.isDigit(position.charAt(i))) {
+                    fullMove *= 10;
+                    fullMove = position.charAt(i) - '0';
+                    ++i;
+                }
+                fullMove *= 2;
+                break;
+
             } else {
                 if (c == '\\' || c == '/') {
                     if (++rank == height || file != width) {
@@ -200,16 +322,17 @@ public class ChessPosition {
             }
         }
         calculateLegalMoves();
-        fen = position;
+        fen = new StringBuilder(position);
         return true;
     }
 
-    public void calculateLegalMoves() throws IllegalPositionException {
+    public int calculateLegalMoves() throws IllegalPositionException {
         numLegalMoves = 0;
         whiteCheck = blackCheck = false;
         kingThreats = null;
         kingSquare = null;
         enPassantPinned = false;
+        allLegalMoves = new ArrayList<RealMove>();
         for (int i = 0; i < height; ++i) {
             for (int j = 0; j < width; ++j) {
                 attackedSquares[i][j] = threatenedSquares[i][j] = false;
@@ -231,10 +354,11 @@ public class ChessPosition {
                 }
             }
         }
-        System.out.println("There are " + numLegalMoves + " legal moves in this position");
+        //System.out.println("There are " + numLegalMoves + " legal moves in this position");
+        return numLegalMoves;
     }
 
-    public boolean pawnsMatchingEnPassant(ChessSquare s1, ChessSquare s2) {
+    private boolean pawnsMatchingEnPassant(ChessSquare s1, ChessSquare s2) {
         ChessSquare whiteSquare = s1.getPiece().isWhite() ? s1 : s2,
                 blackSquare = !s1.getPiece().isWhite() ? s1 : s2;
         Piece whitePawn = whiteSquare.getPiece(),
@@ -252,7 +376,7 @@ public class ChessPosition {
         return true;
     }
 
-    public void calculateThreats(ChessSquare s) {
+    private void calculateThreats(ChessSquare s) {
         int x, y;
         Piece p = s.getPiece();
         for (PieceMove pm : s.getPiece().getMoves()) {
@@ -298,10 +422,10 @@ public class ChessPosition {
                             attackedSquares[y][x] = true;
                             if (Character.toLowerCase(target.getSign()) == 'k') {
                                 if (whiteToMove) {
-                                    System.out.println("White is in check!");
+                                    //System.out.println("White is in check!");
                                     whiteCheck = true;
                                 } else {
-                                    System.out.println("Black is in check!");
+                                    //System.out.println("Black is in check!");
                                     blackCheck = true;
                                 }
                                 if (kingThreats == null) {
@@ -326,7 +450,9 @@ public class ChessPosition {
                             }
                         }
                     } else {
-                        attackedSquares[y][x] = true; //so that the enemy king cannot capture a defended piece
+                        if (hitPieceSquare == null || p.isCanJump()) {
+                            attackedSquares[y][x] = true; //so that the enemy king cannot capture a defended piece
+                        }
                         if ((!p.isCanJump())) {
                             blockedByPieces = true;
                         }
@@ -358,7 +484,7 @@ public class ChessPosition {
         }
     }
 
-    public void calculateLegalMoves(ChessSquare s) throws IllegalPositionException {
+    private void calculateLegalMoves(ChessSquare s) throws IllegalPositionException {
         s.legalMoves = new ArrayList<RealMove>();
         int x, y;
         Piece p = s.getPiece();
@@ -372,28 +498,30 @@ public class ChessPosition {
                 if ((target == null && !pm.isMustCapture()) ||
                         (target != null && pm.isCanCapture() && target.isWhite() != p.isWhite())) {
                     boolean neutralized = true;
-                    if (kingInCheck()) {
+                    if (Character.toLowerCase(p.getSign()) != 'k' && kingInCheck()) {
                         //System.out.println("King is in check, there are " + kingThreats.size() + " threats");
                         if (kingThreats.size() > 1) {
                             neutralized = false;
                         } else if (target == null) {
-                            //king cant really block anything and moving onto attacked squares is covered in King::canMove
-                            if (Character.toLowerCase(p.getSign()) != 'k') {
-                                neutralized = false;
-                                MovePin threat = kingThreats.get(0);
-                                int blockRank = threat.pinnedBy.getRank() + threat.attackVector.y,
-                                        blockFile = threat.pinnedBy.getFile() + threat.attackVector.x;
-                                while (blockRank >= 0 && blockRank < height && blockFile >= 0 && blockFile < width) {
-                                    if (kingSquare == squares[blockRank][blockFile]) {
-                                        break;
-                                    }
-                                    if (y == blockRank && x == blockFile) {
-                                        neutralized = true;
-                                        break;
-                                    }
-                                    blockRank += threat.attackVector.y;
-                                    blockFile += threat.attackVector.x;
+                            neutralized = false;
+                            MovePin threat = kingThreats.get(0);
+                            int blockRank = threat.pinnedBy.getRank() + threat.attackVector.y,
+                                    blockFile = threat.pinnedBy.getFile() + threat.attackVector.x;
+                            while (blockRank >= 0 && blockRank < height && blockFile >= 0 && blockFile < width) {
+                                if (kingSquare == squares[blockRank][blockFile]) {
+                                    break;
                                 }
+                                if (y == blockRank && x == blockFile) {
+                                    neutralized = true;
+                                    break;
+                                }
+                                blockRank += threat.attackVector.y;
+                                blockFile += threat.attackVector.x;
+                            }
+                            if (neutralized == false && isEnPassantAvailable() &&
+                                    MoveFlags.hasFlag(pm.flags(), MoveFlags.RM_ENPASSANT) &&
+                                    pawnsMatchingEnPassant(s, kingThreats.get(0).pinnedBy)) {
+                                neutralized = true;
                             }
                         } else {
                             if (squares[y][x] != kingThreats.get(0).pinnedBy) {
@@ -409,15 +537,17 @@ public class ChessPosition {
                         if (Character.toLowerCase(p.getSign()) == 'p' && (y == 0 || y == height - 1)) {
                             if (p.isWhite() && y == 0) {
                                 for (char c : ChessBoard.pieceArr) {
-                                    if (Character.isUpperCase(c)) {
+                                    if (Character.isUpperCase(c) && Piece.canPromoteTo(c)) {
                                         s.legalMoves.add(new RealMove(s, squares[y][x], MoveFlags.RM_PROMOTION | pm.flags(), c));
+                                        allLegalMoves.add(s.legalMoves.get(s.legalMoves.size() - 1));
                                         ++numLegalMoves;
                                     }
                                 }
                             } else if (!p.isWhite() && y == height - 1) {
                                 for (char c : ChessBoard.pieceArr) {
-                                    if (Character.isLowerCase(c)) {
+                                    if (Character.isLowerCase(c) && Piece.canPromoteTo(c)) {
                                         s.legalMoves.add(new RealMove(s, squares[y][x], MoveFlags.RM_PROMOTION | pm.flags(), c));
+                                        allLegalMoves.add(s.legalMoves.get(s.legalMoves.size() - 1));
                                         ++numLegalMoves;
                                     }
                                 }
@@ -432,6 +562,7 @@ public class ChessPosition {
                                 s.legalMoves.add(new RealMove(s, squares[y][x]));
                             }*/
                             s.legalMoves.add(new RealMove(s, squares[y][x], pm.flags()));
+                            allLegalMoves.add(s.legalMoves.get(s.legalMoves.size() - 1));
                             ++numLegalMoves;
                         }
                     }
@@ -490,6 +621,7 @@ public class ChessPosition {
             setEnPassant(-1, -1);
         }
         if (!MoveFlags.hasFlag(move.flags(), MoveFlags.RM_ROOK_CASTLING)) {
+            ++fullMove;
             whiteToMove = !whiteToMove;
             calculateLegalMoves();
         }
@@ -554,6 +686,7 @@ public class ChessPosition {
         }
         whiteToMove = !whiteToMove;
         calculateLegalMoves();
+        --fullMove;
         return true;
     }
 
@@ -641,4 +774,8 @@ public class ChessPosition {
     public int getBlackQueensideRookFile() {
         return rookPositionX[0][0];
     }
+
+    public int getFullMove() { return fullMove / 2; }
+
+    public List<RealMove> getAllMoves() { return allLegalMoves; }
 }

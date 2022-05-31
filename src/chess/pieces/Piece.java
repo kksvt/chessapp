@@ -84,6 +84,17 @@ public abstract class Piece  {
         }
     }
 
+    public static boolean canPromoteTo(char piece) {
+        switch (Character.toLowerCase(piece)) {
+            case 'q':
+            case 'n':
+            case 'r':
+            case 'b':
+                return true;
+            default:
+                return false;
+        }
+    }
 
     public boolean canMove(int file, int rank, PieceMove m, ChessPosition position) {
         return true;
