@@ -96,8 +96,6 @@ public abstract class Piece  {
         }
     }
 
-    public static int numPromoteTo() { return 4; }
-
     public boolean canMove(int file, int rank, PieceMove m, ChessPosition position) {
         return true;
     }
