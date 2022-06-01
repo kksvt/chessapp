@@ -120,6 +120,8 @@ class ChessVisualSquare extends JPanel {
     public void setSpriteMoving(boolean moving) {
         this.spriteMoving = moving;
     }
+
+    public boolean isSpriteMoving() { return this.spriteMoving; }
 }
 
 class MovingSprite {
@@ -275,6 +277,7 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
     }
 
     public void paint(Graphics g) {
+        ChessVisualSquare dragging = null;
         super.paint(g);
         if (squareSize != squares[0][0].getHeight()) {
             stopMoving();
@@ -284,9 +287,17 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
         for (ChessVisualSquare[] vr : squares) {
             for (ChessVisualSquare r : vr) {
                 if (!r.link.isEmpty() && r.setupSprite(scaledPieces.get(r.link.getPiece().getSign()))) {
-                    g.drawImage(r.getSprite(), r.getBoardPoint().x, r.getBoardPoint().y, null);
+                    if (isDragged && r.isSpriteMoving()) {
+                        dragging = r;
+                    }
+                    else {
+                        g.drawImage(r.getSprite(), r.getBoardPoint().x, r.getBoardPoint().y, null);
+                    }
                 }
             }
+        }
+        if (dragging != null) {
+            g.drawImage(dragging.getSprite(), dragging.getBoardPoint().x, dragging.getBoardPoint().y, null);
         }
     }
 
@@ -571,6 +582,7 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
             else {
                 selection.setSpriteMoving(false);
             }
+            relativePosition = null;
             isDragged = false;
             this.repaint();
         }
