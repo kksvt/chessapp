@@ -37,37 +37,35 @@ public class Rook extends Piece {
 
     public void commitMove(RealMove m, ChessPosition position) {
         if (!MoveFlags.hasFlag(m.flags(), MoveFlags.RM_ROOK_CASTLING)) {
-            System.out.println("Rook moved - castling will be invalidated");
+            //System.out.println("Rook moved - castling will be invalidated");
             invalidateCastling(m, position);
         }
     }
 
     public void commitCaptured(RealMove m, ChessPosition position) {
-        System.out.println("Rook got captured - castling will be invalidated");
+        //System.out.println("Rook got captured - castling will be invalidated");
         invalidateCastling(m, position);
     }
 
     public void invalidateCastling(RealMove m, ChessPosition position) {
-        if (position.canCastleKingSide() || position.canCastleQueenSide()) {
-            if (this.isWhite()) {
-                if (position.whiteCastleKingSide() && this.isKingSide()) {
-                    m.setFlagsBitwise(MoveFlags.RM_WHITE_CASTLE_KINGSIDE_IMPOSSIBLE);
-                    position.setCastleFlags(ChessPosition.WHITE_KINGSIDE);
-                }
-                if (position.whiteCastleQueenSide() && this.isQueenSide()) {
-                    m.setFlagsBitwise(MoveFlags.RM_WHITE_CASTLE_QUEENSIDE_IMPOSSIBLE);
-                    position.setCastleFlags(ChessPosition.WHITE_QUEENSIDE);
-                }
+        if (this.isWhite()) {
+            if (position.whiteCastleKingSide() && this.isKingSide()) {
+                m.setFlagsBitwise(MoveFlags.RM_WHITE_CASTLE_KINGSIDE_IMPOSSIBLE);
+                position.setCastleFlags(ChessPosition.WHITE_KINGSIDE);
             }
-            else {
-                if (position.blackCastleKingSide() && this.isKingSide()) {
-                    m.setFlagsBitwise(MoveFlags.RM_BLACK_CASTLE_KINGSIDE_IMPOSSIBLE);
-                    position.setCastleFlags(ChessPosition.BLACK_KINGSIDE);
-                }
-                if (position.blackCastleQueenSide() && this.isQueenSide()) {
-                    m.setFlagsBitwise(MoveFlags.RM_BLACK_CASTLE_QUEENSIDE_IMPOSSIBLE);
-                    position.setCastleFlags(ChessPosition.BLACK_QUEENSIDE);
-                }
+            if (position.whiteCastleQueenSide() && this.isQueenSide()) {
+                m.setFlagsBitwise(MoveFlags.RM_WHITE_CASTLE_QUEENSIDE_IMPOSSIBLE);
+                position.setCastleFlags(ChessPosition.WHITE_QUEENSIDE);
+            }
+        }
+        else {
+            if (position.blackCastleKingSide() && this.isKingSide()) {
+                m.setFlagsBitwise(MoveFlags.RM_BLACK_CASTLE_KINGSIDE_IMPOSSIBLE);
+                position.setCastleFlags(ChessPosition.BLACK_KINGSIDE);
+            }
+            if (position.blackCastleQueenSide() && this.isQueenSide()) {
+                m.setFlagsBitwise(MoveFlags.RM_BLACK_CASTLE_QUEENSIDE_IMPOSSIBLE);
+                position.setCastleFlags(ChessPosition.BLACK_QUEENSIDE);
             }
         }
     }
