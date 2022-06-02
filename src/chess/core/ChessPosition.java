@@ -210,7 +210,7 @@ public class ChessPosition {
                     if (i + 1 >= position.length()) {
                         return false;
                     }
-                    int enPassantFile = position.charAt(i) - 'a', enPassantRank = position.charAt(i + 1);
+                    int enPassantFile = position.charAt(i) - 'a', enPassantRank = position.charAt(i + 1) - '0';
                     if (enPassantFile < 0 || enPassantFile >= width || enPassantRank < 0 || enPassantRank >= height) {
                         return false;
                     }
