@@ -103,6 +103,71 @@ public class ChessPosition {
         return squares[rank][file].getPiece();
     }
 
+    public StringBuilder savePosition() {
+        fen = new StringBuilder();
+        int emptyStreak = 0;
+        //piece placement
+        for (int i = 0; i < height; ++i) {
+            for (int j = 0; j < width; ++j) {
+                ChessSquare s = squares[i][j];
+                if (s.isEmpty()) {
+                    ++emptyStreak;
+                }
+                else {
+                    if (emptyStreak > 0) {
+                        fen.append(emptyStreak);
+                        emptyStreak = 0;
+                    }
+                    fen.append(s.getPiece().getSign());
+                }
+            }
+            if (emptyStreak > 0) {
+                fen.append(emptyStreak);
+                emptyStreak = 0;
+            }
+            if (i < height - 1) {
+                fen.append('/');
+            }
+            else {
+                fen.append(' ');
+            }
+        }
+        //turn
+        if (isWhiteToMove()) {
+            fen.append("w ");
+        }
+        else {
+            fen.append("b ");
+        }
+        if (castleFlags == 0) {
+            fen.append("- ");
+        }
+        else {
+            if (whiteCastleKingSide()) {
+                fen.append('K');
+            }
+            if (whiteCastleQueenSide()) {
+                fen.append('Q');
+            }
+            if (blackCastleKingSide()) {
+                fen.append('k');
+            }
+            if (blackCastleQueenSide()) {
+                fen.append('q');
+            }
+            fen.append(' ');
+        }
+        //en passant
+        if (enPassant[0] == -1 || enPassant[1] == -1) { //can't use isEnPassantAvailable() cuz it factors for pins
+            fen.append("- ");
+        }
+        else {
+            fen.append(Character.toString(enPassant[0] + 'a') + Character.toString(height - enPassant[1] + '0') + " ");
+        }
+        fen.append(halfMove + " " + getFullMove());
+        return fen;
+    }
+
     public boolean parsePosition(String position) {
         whiteToMove = true;
         fullMove = halfMove = -1;
@@ -210,7 +275,7 @@ public class ChessPosition {
                     if (i + 1 >= position.length()) {
                         return false;
                     }
-                    int enPassantFile = position.charAt(i) - 'a', enPassantRank = position.charAt(i + 1) - '0';
+                    int enPassantFile = position.charAt(i) - 'a', enPassantRank = height - position.charAt(i + 1) + '0';
                     if (enPassantFile < 0 || enPassantFile >= width || enPassantRank < 0 || enPassantRank >= height) {
                         return false;
                     }
