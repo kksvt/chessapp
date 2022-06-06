@@ -1,9 +1,10 @@
 package chess;
 
 import chess.core.ChessWindow;
+import chess.gui.MenuWindow;
 
 public class ChessApp {
     public static void main(String[] args) {
-        ChessWindow chessWindow = new ChessWindow();
+        MenuWindow chessWindow = new MenuWindow();
     }
 }

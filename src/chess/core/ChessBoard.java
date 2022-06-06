@@ -214,7 +214,7 @@ class PromotionPanel extends JOptionPane implements ActionListener {
     public PromotionPanel(HashMap<Character, Image> scaledPieces, boolean white) {
         this.setMessage("Which piece do you want to promote to?");
         this.setMessageType(JOptionPane.QUESTION_MESSAGE);
-        List<JButton> promButtons = new ArrayList<JButton>();
+        List<JButton> promButtons = new ArrayList<>();
         for (char piece : ChessBoard.pieceArr) {
             if (Character.isUpperCase(piece) == white && Piece.canPromoteTo(piece)) {
                 promButtons.add(makeButton(scaledPieces, piece));
@@ -274,7 +274,7 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
         }
     }
 
-    ChessBoard(int width, int height, int squareSize, Color lightSquare, Color darkSquare, Player white, Player black) {
+    public ChessBoard(int width, int height, int squareSize, Color lightSquare, Color darkSquare, Player white, Player black) {
         this.setLayout(new GridLayout(width, height, 0, 0));
         chessPosition = new ChessPosition(width, height, ChessPosition.defaultPosition);
         this.squareSize = squareSize;
