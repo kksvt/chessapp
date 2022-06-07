@@ -12,6 +12,8 @@ public class MoveFlags {
     public final static int RM_ENPASSANT = 256;
     public final static int RM_TWOSQRPAWN = 512;
     public final static int RM_ENPASSANT_IMPOSSIBLE = 1024;
+    public final static int RM_CHECK = 2048;
+    public static final int RM_CHECKMATE = 4096;
 
     public static boolean hasFlag(int bitmask, int flag) {
         return (bitmask & flag) == flag;

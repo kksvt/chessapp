@@ -1,10 +1,10 @@
 package chess.gui;
 
-import chess.Player;
+import chess.core.ChessPosition;
+import chess.players.*;
 import chess.core.ChessBoard;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.ArrayList;
@@ -37,8 +37,9 @@ public class MenuWindow extends JFrame {
         chessPanel.setBorder(new EmptyBorder(10,0,0,0));
         chessPanel.setBackground(new Color(0, 0, 0, 0));
         chessPanel.add(new ChessBoard(8, 8, 80, Color.white, Color.black,
-                new Player("Player 1", true, true),
-                new Player("Player 2", false, true)));
+                new HumanPlayer("Player 1"),
+                new HumanPlayer("Player 2"),
+                ChessPosition.defaultPosition));
 
         gbc.gridx = 0;
         gbc.gridy = 1;
