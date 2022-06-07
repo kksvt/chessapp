@@ -604,7 +604,7 @@ public class ChessPosition {
                             if (p.isWhite() && y == 0) {
                                 for (char c : ChessBoard.pieceArr) {
                                     if (Character.isUpperCase(c) && Piece.canPromoteTo(c)) {
-                                        s.legalMoves.add(new RealMove(s, squares[y][x], MoveFlags.RM_PROMOTION | pm.flags(), c));
+                                        s.legalMoves.add(new RealMove(s, squares[y][x], MoveFlags.RM_PROMOTION | pm.flags(), c, halfMove));
                                         allLegalMoves.add(s.legalMoves.get(s.legalMoves.size() - 1));
                                         ++numLegalMoves;
                                     }
@@ -612,7 +612,7 @@ public class ChessPosition {
                             } else if (!p.isWhite() && y == height - 1) {
                                 for (char c : ChessBoard.pieceArr) {
                                     if (Character.isLowerCase(c) && Piece.canPromoteTo(c)) {
-                                        s.legalMoves.add(new RealMove(s, squares[y][x], MoveFlags.RM_PROMOTION | pm.flags(), c));
+                                        s.legalMoves.add(new RealMove(s, squares[y][x], MoveFlags.RM_PROMOTION | pm.flags(), c, halfMove));
                                         allLegalMoves.add(s.legalMoves.get(s.legalMoves.size() - 1));
                                         ++numLegalMoves;
                                     }
@@ -698,6 +698,7 @@ public class ChessPosition {
                 move.generateAlgebraicMove(this);
                 calculateLegalMoves();
                 move.algAppendChecks(this);
+                //System.out.println("Algebraic move: " + move.getAlgebraicMove());
             }
             else {
                 calculateLegalMoves();

@@ -24,6 +24,8 @@ public class ChessWindow extends JFrame {
                     //new ComputerPlayer("Stockfish D10", true, "./engines/stockfish/stockfish_15_x64.exe", "depth", 10),
                     new ComputerPlayer("Stockfish", "./engines/stockfish/stockfish_15_x64.exe"),
                     ChessPosition.defaultPosition
+                    //"4k3/8/8/8/Pp1N4/5K2/8/8 b - a3 0 1"
+                    //"8/8/8/8/K7/1N6/pk6/8 b - - 39 34"
                 )
         );
         } catch (IOException e) {

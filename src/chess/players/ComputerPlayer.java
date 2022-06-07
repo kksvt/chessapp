@@ -72,8 +72,9 @@ public class ComputerPlayer extends Player {
             }
             if (!outOfBook) {
                 if (OpeningBook.bookExists() && chessBoard.getMoveHistory().size() < 12) {
+                    System.out.println("============");
                     String move = OpeningBook.getRandomMove(chessBoard.getMoveHistory());
-                    if (move != null) {
+                    if (move != null && move.length() > 0) {
                         System.out.println("The move we got is: " + move);
                         RealMove m = RealMove.algToRealMove(chessBoard.getChessPosition(), move);
                         if (m != null) {
@@ -82,6 +83,9 @@ public class ComputerPlayer extends Player {
                             System.out.println("We are out of book: Couldn't find the book move");
                             outOfBook = true;
                         }
+                    }
+                    else {
+                        outOfBook = true;
                     }
                 }
                 else {
@@ -110,7 +114,14 @@ public class ComputerPlayer extends Player {
         ChessPosition chessPosition = chessBoard.getChessPosition();
         RealMove realMove = RealMove.getMoveForEngine(chessPosition, move);
         if (realMove == null) {
-            throw new IllegalPositionException("Engine wants to play a move that's deemed illegal");
+            System.out.println(chessPosition.savePosition());
+            for (RealMove rm : chessPosition.getAllMoves()) {
+                System.out.println("Legal move: " + rm.getEngineMove(chessPosition.height()));
+                if (MoveFlags.hasFlag(rm.flags(), MoveFlags.RM_PROMOTION)) {
+                    System.out.println("Promotion flag: " + rm.getArg());
+                }
+            }
+            throw new IllegalPositionException("Engine wants to play a move that's deemed illegal: " + move);
         }
         else {
             chessBoard.move(realMove, true);

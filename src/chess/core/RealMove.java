@@ -137,14 +137,15 @@ public class RealMove {
                         continue;
                     }
                     if (to() == move.to() && piece == move.fromPiece().getSign()) {
-                        System.out.println("adding ambiguous move");
+                        //System.out.println("adding ambiguous move");
                         ambiguous.add(move);
                     }
                 }
             }
             switch (ambiguous.size()) {
                 case 0:
-                    if (toPiece() != null && Character.toLowerCase(piece) == 'p') {
+                    if ((toPiece() != null || MoveFlags.hasFlag(flags, MoveFlags.RM_ENPASSANT)) &&
+                            Character.toLowerCase(piece) == 'p') {
                         algMove.append(Character.toString(from.getFile() + 'a'));
                     }
                     else {
@@ -162,12 +163,12 @@ public class RealMove {
                     algMove.append(signForPiece(piece) + Character.toString(from.getFile() + 'a') + (chessPosition.height() - from.getRank()));
                     break;
             }
-            if (toPiece() != null) {
+            if (toPiece() != null || MoveFlags.hasFlag(flags, MoveFlags.RM_ENPASSANT)) {
                 algMove.append('x');
             }
             algMove.append(Character.toString(to.getFile() + 'a') + (chessPosition.height() - to.getRank()));
             if (MoveFlags.hasFlag(flags, MoveFlags.RM_PROMOTION)) {
-                algMove.append('=' + getArg());
+                algMove.append("=" + Character.toUpperCase(getArg()));
             }
         }
         return algMove;
@@ -219,7 +220,7 @@ public class RealMove {
         for (RealMove m : moveOrigin.legalMoves) {
             boolean hasProm = MoveFlags.hasFlag(m.flags(), MoveFlags.RM_PROMOTION);
             if (m.to() == moveDest &&
-                    ((promArg == '\0' && !hasProm) || (promArg != '\0' && hasProm && promArg == m.getArg()))) {
+                    ((promArg == '\0' && !hasProm) || (promArg != '\0' && hasProm && promArg == Character.toLowerCase(m.getArg())))) {
                 return m;
             }
         }
@@ -228,7 +229,7 @@ public class RealMove {
 
     public static RealMove algToRealMove(ChessPosition chessPosition, String algebraicMove) {
         //we assume that the algebraic notation move is correct
-        if (algebraicMove.contains("0-0-0")) {
+        if (algebraicMove.contains("0-0-0") || algebraicMove.contains("O-O-O")) {
             for (RealMove m : chessPosition.getAllMoves()) {
                 if (MoveFlags.hasFlag(m.flags(), MoveFlags.RM_CASTLE_QUEENSIDE)) {
                     return m;
@@ -236,7 +237,7 @@ public class RealMove {
             }
             return null;
         }
-        if (algebraicMove.contains("0-0")) {
+        if (algebraicMove.contains("0-0") || algebraicMove.contains("O-O")) {
             for (RealMove m : chessPosition.getAllMoves()) {
                 if (MoveFlags.hasFlag(m.flags(), MoveFlags.RM_CASTLE_KINGSIDE)) {
                     return m;
@@ -247,7 +248,7 @@ public class RealMove {
         Character piece = 'P';
         int rankFrom = -1, rankTo = -1, fileFrom = -1, fileTo = -1, i = 0;
         char promotion = '\0';
-        if (Piece.isValidPiece(algebraicMove.charAt(0))) {
+        if (Character.isUpperCase(algebraicMove.charAt(0)) && Piece.isValidPiece(algebraicMove.charAt(0))) {
             piece = algebraicMove.charAt(0);
             ++i;
             int captureIndex = algebraicMove.indexOf('x');
