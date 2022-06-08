@@ -102,9 +102,13 @@ public abstract class Piece  {
 
     public boolean isWhite() { return Character.isUpperCase(sign); }
 
-    public void commitMove(RealMove m, ChessPosition position) {}
+    public void commitMove(RealMove m, ChessPosition position) {
+        position.incrementHalfMove();
+    }
 
-    public void commitCaptured(RealMove m, ChessPosition position) {}
+    public void commitCaptured(RealMove m, ChessPosition position) {
+        position.resetHalfMove();
+    }
 
 //  ==============================================  GETTERS AND SETTERS ================================================
 

@@ -102,6 +102,7 @@ public class King extends Piece {
     }
 
     public void commitMove(RealMove m, ChessPosition position) {
+        super.commitMove(m, position);
         if (this.isWhite()) {
             if (position.whiteCastleKingSide()) {
                 if (MoveFlags.hasFlag(m.flags(), MoveFlags.RM_CASTLE_KINGSIDE)) {

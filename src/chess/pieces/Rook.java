@@ -37,12 +37,14 @@ public class Rook extends Piece {
 
     public void commitMove(RealMove m, ChessPosition position) {
         if (!MoveFlags.hasFlag(m.flags(), MoveFlags.RM_ROOK_CASTLING)) {
+            super.commitMove(m, position);
             //System.out.println("Rook moved - castling will be invalidated");
             invalidateCastling(m, position);
         }
     }
 
     public void commitCaptured(RealMove m, ChessPosition position) {
+        super.commitCaptured(m, position);
         //System.out.println("Rook got captured - castling will be invalidated");
         invalidateCastling(m, position);
     }
