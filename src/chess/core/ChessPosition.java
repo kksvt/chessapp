@@ -420,6 +420,7 @@ public class ChessPosition {
             }
         }
         //System.out.println("There are " + numLegalMoves + " legal moves in this position");
+        //System.out.println("halfMove: " + halfMove + " fullMove: " + getFullMove());
         return numLegalMoves;
     }
 
@@ -603,7 +604,7 @@ public class ChessPosition {
                             if (p.isWhite() && y == 0) {
                                 for (char c : ChessBoard.pieceArr) {
                                     if (Character.isUpperCase(c) && Piece.canPromoteTo(c)) {
-                                        s.legalMoves.add(new RealMove(s, squares[y][x], MoveFlags.RM_PROMOTION | pm.flags(), c));
+                                        s.legalMoves.add(new RealMove(s, squares[y][x], MoveFlags.RM_PROMOTION | pm.flags(), c, halfMove));
                                         allLegalMoves.add(s.legalMoves.get(s.legalMoves.size() - 1));
                                         ++numLegalMoves;
                                     }
@@ -611,7 +612,7 @@ public class ChessPosition {
                             } else if (!p.isWhite() && y == height - 1) {
                                 for (char c : ChessBoard.pieceArr) {
                                     if (Character.isLowerCase(c) && Piece.canPromoteTo(c)) {
-                                        s.legalMoves.add(new RealMove(s, squares[y][x], MoveFlags.RM_PROMOTION | pm.flags(), c));
+                                        s.legalMoves.add(new RealMove(s, squares[y][x], MoveFlags.RM_PROMOTION | pm.flags(), c, halfMove));
                                         allLegalMoves.add(s.legalMoves.get(s.legalMoves.size() - 1));
                                         ++numLegalMoves;
                                     }
@@ -626,7 +627,7 @@ public class ChessPosition {
                             } else {
                                 s.legalMoves.add(new RealMove(s, squares[y][x]));
                             }*/
-                            s.legalMoves.add(new RealMove(s, squares[y][x], pm.flags()));
+                            s.legalMoves.add(new RealMove(s, squares[y][x], pm.flags(), halfMove));
                             allLegalMoves.add(s.legalMoves.get(s.legalMoves.size() - 1));
                             ++numLegalMoves;
                         }
@@ -645,6 +646,10 @@ public class ChessPosition {
     }
 
     public boolean move(RealMove move) {
+        return move(move, true);
+    }
+
+    public boolean move(RealMove move, boolean generateAlgebraicMove) {
         if (getEnPassant()[0] != -1 && getEnPassant()[1] != -1) { //has to be above !hasFlags TWOSQRPAWN in case of consecutive two square pawn moves
             move.setFlagsBitwise(MoveFlags.RM_ENPASSANT_IMPOSSIBLE);
             move.setEnPassant(enPassant);
@@ -676,11 +681,11 @@ public class ChessPosition {
         if (MoveFlags.hasFlag(move.flags(), MoveFlags.RM_CASTLE_KINGSIDE)) {
             move(new RealMove(squares[move.from().getRank()][rookPositionX[whiteToMove ? 1 : 0][0]],
                     squares[move.from().getRank()][width - 3],
-                    MoveFlags.RM_ROOK_CASTLING));
+                    MoveFlags.RM_ROOK_CASTLING, -1));
         } else if (MoveFlags.hasFlag(move.flags(), MoveFlags.RM_CASTLE_QUEENSIDE)) {
             move(new RealMove(squares[move.from().getRank()][rookPositionX[whiteToMove ? 1 : 0][1]],
                     squares[move.from().getRank()][3],
-                    MoveFlags.RM_ROOK_CASTLING));
+                    MoveFlags.RM_ROOK_CASTLING, -1));
         }
         if (!MoveFlags.hasFlag(move.flags(), MoveFlags.RM_TWOSQRPAWN)) {
             setEnPassant(-1, -1);
@@ -688,12 +693,23 @@ public class ChessPosition {
         if (!MoveFlags.hasFlag(move.flags(), MoveFlags.RM_ROOK_CASTLING)) {
             ++fullMove;
             whiteToMove = !whiteToMove;
-            calculateLegalMoves();
+            //fixme: is there a less stupid way of implementing this?
+            if (generateAlgebraicMove) {
+                move.generateAlgebraicMove(this);
+                calculateLegalMoves();
+                move.algAppendChecks(this);
+                //System.out.println("Algebraic move: " + move.getAlgebraicMove());
+            }
+            else {
+                calculateLegalMoves();
+            }
         }
         return true;
     }
 
     public boolean undoMove(RealMove move) {
+        int oldHalfMove = move.getHalfMove();
+        if (oldHalfMove != -1) { halfMove = oldHalfMove; }
         if (!move.to().isEmpty()) {
             move.to().removePiece();
         }
@@ -723,21 +739,21 @@ public class ChessPosition {
             if (!whiteToMove) {
                 move(new RealMove(squares[move.from().getRank()][width - 3],
                         squares[move.from().getRank()][rookPositionX[1][0]],
-                        MoveFlags.RM_ROOK_CASTLING));
+                        MoveFlags.RM_ROOK_CASTLING, -1));
             } else {
                 move(new RealMove(squares[move.from().getRank()][width - 3],
                         squares[move.from().getRank()][rookPositionX[0][0]],
-                        MoveFlags.RM_ROOK_CASTLING));
+                        MoveFlags.RM_ROOK_CASTLING, -1));
             }
         } else if (MoveFlags.hasFlag(move.flags(), MoveFlags.RM_CASTLE_QUEENSIDE)) {
             if (!whiteToMove) {
                 move(new RealMove(squares[move.from().getRank()][3],
                         squares[move.from().getRank()][rookPositionX[1][1]],
-                        MoveFlags.RM_ROOK_CASTLING));
+                        MoveFlags.RM_ROOK_CASTLING, -1));
             } else {
                 move(new RealMove(squares[move.from().getRank()][3],
                         squares[move.from().getRank()][rookPositionX[0][1]],
-                        MoveFlags.RM_ROOK_CASTLING));
+                        MoveFlags.RM_ROOK_CASTLING, -1));
             }
         }
         if (MoveFlags.hasFlag(move.flags(), MoveFlags.RM_ENPASSANT_IMPOSSIBLE)) {
@@ -752,17 +768,6 @@ public class ChessPosition {
         whiteToMove = !whiteToMove;
         calculateLegalMoves();
         --fullMove;
-        return true;
-    }
-
-    public boolean move(ChessSquare sqrFrom, ChessSquare sqrTo) {
-        if (!sqrTo.isEmpty()) {
-            sqrTo.removePiece();
-        }
-        sqrTo.piece = sqrFrom.getPiece();
-        sqrFrom.removePiece();
-        whiteToMove = !whiteToMove;
-        calculateLegalMoves();
         return true;
     }
 
@@ -841,6 +846,12 @@ public class ChessPosition {
     }
 
     public int getFullMove() { return fullMove / 2; }
+
+    public void resetHalfMove() { halfMove = 0; }
+
+    public int incrementHalfMove() { return ++halfMove; }
+
+    public int getHalfMove() { return halfMove; }
 
     public List<RealMove> getAllMoves() { return allLegalMoves; }
 }
