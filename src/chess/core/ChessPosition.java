@@ -9,7 +9,7 @@ import java.util.List;
 public class ChessPosition {
     StringBuilder fen;
     public final static String defaultPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-    public final static String emptyPosition= "8/8/8/8/8/8/8/8";
+    public final static String emptyPosition= "8/8/8/8/8/8/8/8 w - -";
 
     public final static int WHITE_KINGSIDE = 1;
     public final static int WHITE_QUEENSIDE = 2;

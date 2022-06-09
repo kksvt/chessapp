@@ -33,8 +33,10 @@ public class Controller {
         switch (mode){
             case "default":
                 db.position = ChessPosition.defaultPosition;
+                break;
             case "clear":
                 db.position = ChessPosition.emptyPosition;
+                break;
             default:
                 db.position = mode;
         }

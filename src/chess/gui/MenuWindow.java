@@ -9,6 +9,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 
 public class MenuWindow extends BaseWindow {
     GradButton[] buttons = {new GradButton(), new GradButton()};
@@ -32,6 +33,8 @@ public class MenuWindow extends BaseWindow {
                 ow.setVisible(true);
             }
         });
+
+
         StylizeButton(timeFormatButton, "Time Format");
         StylizeButton(clearPosition, "Clear");
         StylizeButton(defaultPosition, "Initial");
@@ -68,6 +71,7 @@ public class MenuWindow extends BaseWindow {
         MenuEventHandler handler = new MenuEventHandler();
         clearPosition.addActionListener(handler);
         defaultPosition.addActionListener(handler);
+        simulationButton.addActionListener(handler);
 
         for (int i = 0; i < 2; i++) {
             buttons[i].setFont(new Font("Calibri", Font.BOLD, 40));
@@ -87,7 +91,6 @@ public class MenuWindow extends BaseWindow {
         gbc.anchor = GridBagConstraints.EAST;
         gbc.insets = new Insets(2, 2, 2, 2);
         baseFrame.add(menuButtons, gbc);
-
 
         gbc.gridx = 0;
         gbc.gridy = 2;
@@ -113,19 +116,15 @@ public class MenuWindow extends BaseWindow {
         @Override
         public void actionPerformed(ActionEvent event) {
             if(event.getSource()==defaultPosition){
-                System.out.println("12312");
-                controller.setChessboardPosition("default");
-                chessBoard = new ChessBoard("null");
-                chessBoard.refresh(controller.getPosition());
+                chessBoard.getChessPosition().parsePosition(ChessPosition.defaultPosition);
+                chessBoard.refreshLinks(8, 8);
                 chessBoard.repaint();
                 return;
             }
             else if(event.getSource()==clearPosition){
-                System.out.println("222222");
-                chessBoard = new ChessBoard();
-                controller.setChessboardPosition("clear");
-                referenceToThis.setVisible(false);
-                referenceToThis.setVisible(true);
+                chessBoard.getChessPosition().parsePosition(ChessPosition.emptyPosition);
+                chessBoard.refreshLinks(8, 8);
+                chessBoard.repaint();
                 return;
             }
 
@@ -138,16 +137,30 @@ public class MenuWindow extends BaseWindow {
                         JOptionPane.WARNING_MESSAGE);
                 return;
             }
+
             referenceToThis.setVisible(false);
+
             if (event.getSource() == buttons[0]) {
-                gameWindow = new GameWindow(referenceToThis, "PlayerVsEngine");
+                try {
+                    gameWindow = new GameWindow(referenceToThis, 1);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 gameWindow.setVisible(true);
             }
             else if (event.getSource() == buttons[1]) {
-                gameWindow = new GameWindow(referenceToThis, "PlayerVsPlayer");
+                try {
+                    gameWindow = new GameWindow(referenceToThis, 2);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
 
             } else if (event.getSource() == simulationButton) {
-                gameWindow = new GameWindow(referenceToThis, "EngineVsEngine");
+                try {
+                    gameWindow = new GameWindow(referenceToThis, 3);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }

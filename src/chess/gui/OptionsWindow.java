@@ -64,12 +64,14 @@ public final class OptionsWindow extends BaseWindow {
         @Override
         public void actionPerformed(ActionEvent event) {
             if(event.getSource()==lightBox){
-                System.out.println("111");
                 windowParent.controller.setLightSquare((Color) lightBox.getSelectedItem());
+                windowParent.chessBoard.refreshLinks(8, 8);
+                windowParent.chessBoard.repaint();
             }
             else if(event.getSource()==darkBox){
-                System.out.println("222");
                 windowParent.controller.setDarkSquare((Color) darkBox.getSelectedItem());
+                windowParent.chessBoard.refreshLinks(8, 8);
+                windowParent.chessBoard.repaint();
             }
 
         }
