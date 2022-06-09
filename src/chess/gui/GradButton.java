@@ -1,11 +1,6 @@
 package chess.gui;
 
-import java.awt.AlphaComposite;
-import java.awt.Color;
-import java.awt.GradientPaint;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -46,7 +41,8 @@ public class GradButton extends JButton {
     public GradButton() {
         setContentAreaFilled(false);
         setForeground(Color.WHITE);
-        setBorder(new EmptyBorder(10, 20, 10, 20));
+//        setBorder(new EmptyBorder(10, 20, 10, 20));
+        setBorder(new EmptyBorder(20, 20, 20, 20));
         setForeground(new Color(240, 240, 240));
         addMouseListener(new MouseAdapter() {
             @Override
@@ -99,6 +95,8 @@ public class GradButton extends JButton {
                 }
             }
         });
+        setColorLeft(new java.awt.Color(245, 161, 66));
+        setColorRight(new java.awt.Color(250, 74, 15));
     }
 
     @Override

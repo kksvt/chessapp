@@ -23,7 +23,7 @@ public class BaseFrame extends JPanel {
     BaseFrame(){
         ImageIcon icon = new ImageIcon("sprites/background.jpg");
         setBgImage(icon);
-        setSize(800, 800);
+//        setSize(800, 800);
         setVisible(true);
         setBorder(new EmptyBorder(20,20,20,20));
     }

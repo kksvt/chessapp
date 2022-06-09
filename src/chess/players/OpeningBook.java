@@ -12,6 +12,7 @@ public class OpeningBook { //goes up to move 6
     private static boolean didRead = false;
     private static Random rand = new Random();
     public static boolean readFromFile() {
+        System.out.println("Reading the book");
         if (didRead) {
             return openingLines.size() > 0;
         }

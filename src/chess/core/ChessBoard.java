@@ -1,5 +1,6 @@
 package chess.core;
 
+import chess.players.HumanPlayer;
 import chess.players.Player;
 import chess.pieces.Piece;
 
@@ -245,6 +246,20 @@ class PromotionPanel extends JOptionPane implements ActionListener {
     }
 }
 
+class ZombieSprite {
+    private Image sprite;
+    private Point boardPoint;
+
+    ZombieSprite(Image sprite, Point boardPoint) {
+        this.sprite = sprite;
+        this.boardPoint = boardPoint;
+    }
+
+    public Point getBoardPoint() { return boardPoint; }
+
+    public Image getSprite() { return sprite; }
+}
+
 public class ChessBoard extends JPanel implements MouseListener, MouseMotionListener, ActionListener {
 
     public final static char[] pieceArr = new char[]{'P', 'B', 'N', 'R', 'Q', 'K', 'p', 'b', 'n', 'r', 'q', 'k'};
@@ -266,6 +281,7 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
     //animating the move
     private Timer moveAnimTimer;
     private List<MovingSprite> movingSprites;
+    private ZombieSprite zombie;
     //dragging a piece
     private boolean isDragged;
     private Point relativePosition;
@@ -287,6 +303,7 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
         }
     }
 
+
     public ChessBoard(int width, int height, int squareSize,
                       Color lightSquare, Color darkSquare,
                       Player white, Player black, String fen) {
@@ -302,6 +319,7 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
         this.moveHistory = new ArrayDeque<RealMove>();
         this.movingSprites = new ArrayList<MovingSprite>();
         this.isDragged = false;
+        this.zombie = null;
         for (int i = 0; i < height; ++i) {
             for (int j = 0; j < width; ++j) {
                 boolean isLight = (i + j) % 2 == 0; //light = light square + dark text
@@ -322,6 +340,30 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
         playerThink(1000);
     }
 
+    public void refreshLinks(int height, int width) {
+        for (int i = 0; i < height; ++i) {
+            for (int j = 0; j < width; ++j) {
+                squares[i][j].link = chessPosition.getSquare(i, j);
+            }
+        }
+    }
+
+
+
+    public ChessBoard(){
+        this(8, 8, 80, Color.white, Color.black,
+                new HumanPlayer("Player 1"),
+                new HumanPlayer("Player 2"),
+                ChessPosition.emptyPosition);
+    }
+
+    public ChessBoard(String def){
+        this(8, 8, 80, Color.white, Color.black,
+                new HumanPlayer("Player 1"),
+                new HumanPlayer("Player 2"),
+                ChessPosition.defaultPosition);
+    }
+
     public void paint(Graphics g) {
         ChessVisualSquare dragging = null;
         super.paint(g);
@@ -329,6 +371,9 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
             stopMoving();
             squareSize = squares[0][0].getHeight();
             initAllSprites();
+        }
+        if (zombie != null) {
+            g.drawImage(zombie.getSprite(), zombie.getBoardPoint().x, zombie.getBoardPoint().y, null);
         }
         for (ChessVisualSquare[] vr : squares) {
             for (ChessVisualSquare r : vr) {
@@ -407,6 +452,7 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
     public void undoMove() {
         if (white.getIsHuman() || black.getIsHuman()) {
             resetMoveSelection();
+            zombie = null;
             if (!moveHistory.isEmpty()) {
                 playerStop();
                 chessPosition.undoMove(moveHistory.removeLast());
@@ -430,6 +476,8 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
             sqrTo.setBackground(new Color(36, 129, 183));
             sqrFrom.setBackground((rankFrom + fileFrom) % 2 == 0 ? new Color(232, 12, 12) : new Color(194, 21, 15));
         }
+        zombie = (sliding && !sqrTo.link.isEmpty()) ?
+                new ZombieSprite(sqrTo.getSprite(), new Point(sqrTo.getBoardPoint())) : null;
         chessPosition.move(move);
         moveHistory.add(move);
         if (sliding) {
@@ -450,9 +498,7 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
             moveAnimTimer = new Timer(1, this);
             moveAnimTimer.start();
         }
-        else {
-            this.repaint();
-        }
+        this.repaint();
         chessPosition.savePosition();
         if (chessPosition.getNumLegalMoves() == 0) {
             if (chessPosition.kingInCheck()) {
@@ -476,6 +522,7 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
     }
 
     private void stopMoving() {
+        zombie = null;
         if (!movingSprites.isEmpty()) {
             for (MovingSprite ms : movingSprites) {
                 ms.stopMoving();
@@ -593,10 +640,11 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
                     if (!ms.isVelocitySet()) {
                         int dist = (int) Math.sqrt(dx * dx + dy * dy),
                                 dMult = dist < 2 * squareSize ? 1 : Math.max(2, dist / squareSize - 1);
+                        dMult *= 2;
                         if (dx != 0 && dy != 0) {
                             if (dxabs != dyabs) {
-                                ms.setVelocity(dx / Math.min(dxabs, dyabs),
-                                        dy / Math.min(dxabs, dyabs));
+                                ms.setVelocity(2 * dx / Math.min(dxabs, dyabs),
+                                        2 * dy / Math.min(dxabs, dyabs));
                             } else {
                                 ms.setVelocity(dMult * dx / dxabs, dMult * dy / dyabs);
                             }
