@@ -1,45 +1,54 @@
 package chess.gui;
 
 import chess.core.ChessPosition;
-import chess.players.*;
+import chess.core.Controller;
 import chess.core.ChessBoard;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.util.ArrayList;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
-public class MenuWindow extends JFrame {
+public class MenuWindow extends BaseWindow {
+    GradButton[] buttons = {new GradButton(), new GradButton()};
+    GradButton simulationButton = new GradButton();
+    MenuWindow referenceToThis;
+    Controller controller;
+    public ChessBoard chessBoard;
 
+    GradButton clearPosition = new GradButton();
+    GradButton defaultPosition = new GradButton();
 
-    public MenuWindow(){
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        BaseFrame baseFrame = new BaseFrame();
+    public MenuWindow(Controller c){
+        controller=c;
+//        super(parent.controller);
+        referenceToThis=this;
 
-        GridBagConstraints gbc = new GridBagConstraints();
-
-        baseFrame.setLayout(new GridBagLayout());
-
-        JPanel menuPanel = new JPanel();
-        menuPanel.setLayout(new FlowLayout());
-        menuPanel.setAlignmentX(0);
-        menuPanel.add(new JLabel("Options"));
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 2;
-        gbc.anchor = GridBagConstraints.NORTH;
-        gbc.gridheight = 1;
-        gbc.weightx = /*gbc.weighty = */ 5;
-        gbc.insets = new Insets(2, 2, 2, 2);
-        baseFrame.add(menuPanel, gbc);
-
+        GradButton timeFormatButton = new GradButton();
+        timeFormatButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent event) {
+                TimeFormatWindow ow = new TimeFormatWindow(referenceToThis);
+                ow.setVisible(true);
+            }
+        });
+        StylizeButton(timeFormatButton, "Time Format");
+        StylizeButton(clearPosition, "Clear");
+        StylizeButton(defaultPosition, "Initial");
+        StylizeButton(simulationButton, "Engine vs Engine");
+        addToRightMenu(simulationButton);
+        addToRightMenu((JComponent) Box.createHorizontalStrut(5));
+        addToRightMenu(timeFormatButton);
+        addToRightMenu((JComponent) Box.createHorizontalStrut(5));
+        addToRightMenu(defaultPosition);
+        addToRightMenu((JComponent) Box.createHorizontalStrut(5));
+        addToRightMenu(clearPosition);
         JPanel chessPanel = new JPanel();
-        chessPanel.setBorder(new EmptyBorder(10,0,0,0));
+        chessPanel.setBorder(new EmptyBorder(5,0,0,0));
         chessPanel.setBackground(new Color(0, 0, 0, 0));
-        chessPanel.add(new ChessBoard(8, 8, 80, Color.white, Color.black,
-                new HumanPlayer("Player 1"),
-                new HumanPlayer("Player 2"),
-                ChessPosition.defaultPosition));
+
+        chessBoard = new ChessBoard();
+        chessPanel.add(chessBoard);
 
         gbc.gridx = 0;
         gbc.gridy = 1;
@@ -47,40 +56,100 @@ public class MenuWindow extends JFrame {
         gbc.fill = GridBagConstraints.BOTH;
         gbc.anchor = GridBagConstraints.SOUTHWEST;
         gbc.weightx = 70;
-        gbc.weighty = 1;
-        baseFrame.add(chessPanel, gbc); // add component to the ContentPane
+        gbc.weighty = 100;
+        baseFrame.add(chessPanel, gbc);
+
 
         JPanel menuButtons = new JPanel();
         menuButtons.setBackground(new Color(0, 0, 0, 0));
         menuButtons.setLayout(new GridLayout(2,1, 0, 3));
         menuButtons.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
 
-        ArrayList<GradButton> buttons = new ArrayList<>();
-        for (int i = 0; i < 2; i++) {
-            GradButton b = new GradButton();
-            b.setColorLeft(new java.awt.Color(169, 235, 216));
-            b.setColorRight(new java.awt.Color(68, 103, 227));
-            b.setFont(new Font("Calibri", Font.BOLD, 40));
-            b.setForeground(Color.white);
-            menuButtons.add(b);
-            buttons.add(b);
-        }
-        buttons.get(0).setText("Play computer");
-        buttons.get(1).setText("Play duo");
+        MenuEventHandler handler = new MenuEventHandler();
+        clearPosition.addActionListener(handler);
+        defaultPosition.addActionListener(handler);
 
+        for (int i = 0; i < 2; i++) {
+            buttons[i].setFont(new Font("Calibri", Font.BOLD, 40));
+            buttons[i].setForeground(Color.white);
+            buttons[i].addActionListener(handler);
+            menuButtons.add(buttons[i]);
+        }
+        buttons[0].setText("Computer");
+        buttons[1].setText("Player");
 
         gbc.gridx = 1;
         gbc.gridy = 1;
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.weightx = /*gbc.weighty = */ 20;
+        gbc.weightx = 20;
+        gbc.weighty = 80;
+        gbc.anchor = GridBagConstraints.EAST;
         gbc.insets = new Insets(2, 2, 2, 2);
         baseFrame.add(menuButtons, gbc);
+
+
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.gridwidth = 2;
+        gbc.gridheight = 1;
+        gbc.anchor = GridBagConstraints.SOUTH;
+        gbc.weighty = 2;
+        JPanel footer = new JPanel();
+        footer.setBackground(new Color(0,0,0,0));
+        footer.setLayout(new FlowLayout());
+        footer.setBorder(new EmptyBorder(5,0,0,0));
+        baseFrame.add(footer, gbc);
+
         add(baseFrame);
 
-        setSize(1000,800);
+        setMinimumSize(new Dimension(1400,1050));
         setVisible(true);
     }
 
+    class MenuEventHandler implements ActionListener {
+        GameWindow gameWindow;
+
+        @Override
+        public void actionPerformed(ActionEvent event) {
+            if(event.getSource()==defaultPosition){
+                System.out.println("12312");
+                controller.setChessboardPosition("default");
+                chessBoard = new ChessBoard("null");
+                chessBoard.refresh(controller.getPosition());
+                chessBoard.repaint();
+                return;
+            }
+            else if(event.getSource()==clearPosition){
+                System.out.println("222222");
+                chessBoard = new ChessBoard();
+                controller.setChessboardPosition("clear");
+                referenceToThis.setVisible(false);
+                referenceToThis.setVisible(true);
+                return;
+            }
+
+
+            ChessPosition chessPosition = new ChessPosition(controller.getPosition());
+            if (!chessPosition.parsePosition(controller.getPosition())){
+                JOptionPane.showMessageDialog(referenceToThis,
+                        "Please rearrange pieces.",
+                        "Illegal position",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            referenceToThis.setVisible(false);
+            if (event.getSource() == buttons[0]) {
+                gameWindow = new GameWindow(referenceToThis, "PlayerVsEngine");
+                gameWindow.setVisible(true);
+            }
+            else if (event.getSource() == buttons[1]) {
+                gameWindow = new GameWindow(referenceToThis, "PlayerVsPlayer");
+
+            } else if (event.getSource() == simulationButton) {
+                gameWindow = new GameWindow(referenceToThis, "EngineVsEngine");
+            }
+        }
+    }
 }
 

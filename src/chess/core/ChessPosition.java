@@ -9,6 +9,7 @@ import java.util.List;
 public class ChessPosition {
     StringBuilder fen;
     public final static String defaultPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    public final static String emptyPosition= "8/8/8/8/8/8/8/8";
 
     public final static int WHITE_KINGSIDE = 1;
     public final static int WHITE_QUEENSIDE = 2;
@@ -40,7 +41,7 @@ public class ChessPosition {
 
     private List<RealMove> allLegalMoves;
 
-    ChessPosition(int width, int height, String position) {
+    public ChessPosition(int width, int height, String position) {
         this.width = width;
         this.height = height;
         attackedSquares = new boolean[height][width];
@@ -52,6 +53,10 @@ public class ChessPosition {
             System.out.println("Invalid FEN, applying default starting position...");
             parsePosition(defaultPosition);
         }
+    }
+
+    public ChessPosition(String position){
+        this(8,8,position);
     }
 
     public int getCastleFlags() {

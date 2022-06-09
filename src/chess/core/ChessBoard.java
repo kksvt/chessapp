@@ -1,5 +1,6 @@
 package chess.core;
 
+import chess.players.HumanPlayer;
 import chess.players.Player;
 import chess.pieces.Piece;
 
@@ -287,6 +288,7 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
         }
     }
 
+
     public ChessBoard(int width, int height, int squareSize,
                       Color lightSquare, Color darkSquare,
                       Player white, Player black, String fen) {
@@ -320,6 +322,56 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
             }
         }
         playerThink(1000);
+    }
+
+    public void refresh(String fen){
+        int width = 8, height = 8;
+        Color lightSquare = Color.white;
+        Color darkSquare = Color.black;
+        chessPosition = new ChessPosition(width, height, fen);
+        this.startPos = chessPosition.getFen().toString();
+        this.squareSize = squareSize;
+        this.white = white;
+        this.black = black;
+        this.squares = new ChessVisualSquare[height][width];
+        this.initAllSprites();
+        this.selection = null;
+        this.moveHistory = new ArrayDeque<RealMove>();
+        this.movingSprites = new ArrayList<MovingSprite>();
+        this.isDragged = false;
+        for (int i = 0; i < height; ++i) {
+            for (int j = 0; j < width; ++j) {
+                boolean isLight = (i + j) % 2 == 0; //light = light square + dark text
+                ChessVisualSquare square = new ChessVisualSquare(chessPosition.getSquares()[i][j],
+                        isLight ? lightSquare : darkSquare, squareSize);
+                if (i == height - 1) {
+                    square.addFileLetter(isLight ? darkSquare : lightSquare, (char)('a' + j));
+                }
+                if (j == width - 1) {
+                    square.addRankNumber(isLight ? darkSquare : lightSquare, height - i);
+                }
+                square.addMouseListener(this);
+                square.addMouseMotionListener(this);
+                squares[i][j] = square;
+                this.add(squares[i][j]);
+            }
+        }
+        playerThink(1000);
+    }
+
+
+    public ChessBoard(){
+        this(8, 8, 80, Color.white, Color.black,
+                new HumanPlayer("Player 1"),
+                new HumanPlayer("Player 2"),
+                ChessPosition.emptyPosition);
+    }
+
+    public ChessBoard(String def){
+        this(8, 8, 80, Color.white, Color.black,
+                new HumanPlayer("Player 1"),
+                new HumanPlayer("Player 2"),
+                ChessPosition.defaultPosition);
     }
 
     public void paint(Graphics g) {
