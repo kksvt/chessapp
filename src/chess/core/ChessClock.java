@@ -13,11 +13,12 @@ class GradLabel extends JLabel {
     private Color color_r = new Color(255, 0, 0);
 
     public GradLabel(Color color_l, Color color_r) {
-        //setBorder(new EmptyBorder(20, 20, 20, 20));
         //setForeground(new Color(240, 240, 240));
         setBorder(null);
         this.color_l = color_l;
         this.color_r = color_r;
+        setBorder(new EmptyBorder(15, 5, 5, 5));
+
     }
 
     @Override
@@ -130,7 +131,7 @@ public class ChessClock extends JPanel {
         GradLabel text = new GradLabel(color_l, color_r);
         getTextForTime(text, startSeconds);
         text.setFont((new Font("Calibri", Font.BOLD, 40)));
-        text.setBorder(new EmptyBorder(15, 10, 10, 10));
+//        text.setBorder(new EmptyBorder(15, 10, 10, 10));
         text.setForeground(Color.white);
         text.setPreferredSize(new Dimension(128, 64));
         text.setHorizontalAlignment(JLabel.CENTER);

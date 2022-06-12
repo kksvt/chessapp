@@ -39,9 +39,12 @@ public final class GameWindow extends BaseWindow{
         chessPanel.setBorder(new EmptyBorder(5,0,0,0));
         chessPanel.setBackground(new Color(0, 0, 0, 0));
 
+        setTimeFormatLabel(parent.getTimeFormat());
+
         GradButton exportFen = new GradButton();
         StylizeButton(exportFen, "Export FEN");
         addToRightMenu(exportFen);
+        addToRightMenu((JComponent) Box.createHorizontalStrut(5));
         EventHandler handler = new EventHandler();
         exportFen.addActionListener(handler);
 
@@ -105,7 +108,8 @@ public final class GameWindow extends BaseWindow{
             }
         });
         undoMove.setEnabled(chessBoard.canUndo());
-        chessPanel.add(undoMove);
+        addToRightMenu(undoMove);
+        addToRightMenu((JComponent) Box.createHorizontalStrut(5));
         GradButton rewindForward = new GradButton();
         StylizeButton(rewindForward, "->");
         rewindForward.addActionListener(new ActionListener() {
@@ -122,8 +126,8 @@ public final class GameWindow extends BaseWindow{
                 chessBoard.moveHistoryRewind(false);
             }
         });
-        chessPanel.add(rewindForward);
-        chessPanel.add(rewindBackward);
+        addToRightMenu(rewindBackward);
+        addToRightMenu(rewindForward);
 
         gbc.gridx = 0;
         gbc.gridy = 1;
