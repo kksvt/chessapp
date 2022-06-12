@@ -18,12 +18,30 @@ public class MenuWindow extends BaseWindow {
     Controller controller;
     public ChessBoard chessBoard;
 
+    public int getEngineVsPlayerLvl() {
+        return engineVsPlayerLvl;
+    }
+
+    public int getEngineVsEngineLvl1() {
+        return engineVsEngineLvl1;
+    }
+
+    public int getEngineVsEngineLvl2() {
+        return engineVsEngineLvl2;
+    }
+
+    private int engineVsPlayerLvl = 8;
+    private int engineVsEngineLvl1 = 8;
+    private int engineVsEngineLvl2 = 8;
+//    Stockfish constraints
+    private final int minDepth = 1;
+    private final int maxDepth = 40;
+
     GradButton clearPosition = new GradButton();
     GradButton defaultPosition = new GradButton();
 
     public MenuWindow(Controller c){
         controller=c;
-//        super(parent.controller);
         referenceToThis=this;
 
         GradButton timeFormatButton = new GradButton();
@@ -33,19 +51,31 @@ public class MenuWindow extends BaseWindow {
                 ow.setVisible(true);
             }
         });
+        GradButton engineLevelButton = new GradButton();
+        engineLevelButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent event) {
+                EngineSettingWindow ew = new EngineSettingWindow(referenceToThis);
+                ew.setVisible(true);
+            }
+        });
 
 
+        StylizeButton(engineLevelButton, "Engine Level");
         StylizeButton(timeFormatButton, "Time Format");
         StylizeButton(clearPosition, "Clear");
         StylizeButton(defaultPosition, "Initial");
         StylizeButton(simulationButton, "Engine vs Engine");
+
         addToRightMenu(simulationButton);
+        addToRightMenu((JComponent) Box.createHorizontalStrut(5));
+        addToRightMenu(engineLevelButton);
         addToRightMenu((JComponent) Box.createHorizontalStrut(5));
         addToRightMenu(timeFormatButton);
         addToRightMenu((JComponent) Box.createHorizontalStrut(5));
         addToRightMenu(defaultPosition);
         addToRightMenu((JComponent) Box.createHorizontalStrut(5));
         addToRightMenu(clearPosition);
+
         JPanel chessPanel = new JPanel();
         chessPanel.setBorder(new EmptyBorder(5,0,0,0));
         chessPanel.setBackground(new Color(0, 0, 0, 0));
@@ -108,6 +138,30 @@ public class MenuWindow extends BaseWindow {
 
         setMinimumSize(new Dimension(1400,1050));
         setVisible(true);
+    }
+
+    public void setEngine(int level) {
+        if(level < minDepth)
+            level = minDepth;
+        if(level > maxDepth)
+            level = maxDepth;
+
+        engineVsPlayerLvl = level;
+    }
+
+    public void setEngines(int level1, int level2) {
+        if(level1 < minDepth)
+            level1 = minDepth;
+        else if(level1 > maxDepth)
+            level1 = maxDepth;
+
+        if(level2 < minDepth)
+            level2 = minDepth;
+        else if(level2 > maxDepth)
+            level2 = maxDepth;
+
+        engineVsEngineLvl1 = level1;
+        engineVsEngineLvl2 = level2;
     }
 
     class MenuEventHandler implements ActionListener {

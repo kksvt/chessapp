@@ -54,16 +54,19 @@ public final class GameWindow extends BaseWindow{
         switch (mode){
             case 1:
                 p1 = new HumanPlayer(parent.controller.getPlayerName1());
-                p2 = new ComputerPlayer("Stockfish", "./engines/stockfish/stockfish_15_x64.exe");
+                p2 = new ComputerPlayer("Stockfish", "./engines/stockfish/stockfish_15_x64.exe",
+                        "depth", parent.getEngineVsPlayerLvl());
+                System.out.println(parent.getEngineVsPlayerLvl());
                 break;
             case 2:
                 p1 = new HumanPlayer(parent.controller.getPlayerName1());
                 p2 = new HumanPlayer(parent.controller.getPlayerName2());
                 break;
             case 3:
-                p1 = new ComputerPlayer("Stockfish", "./engines/stockfish/stockfish_15_x64.exe");
+                p1 = new ComputerPlayer("Stockfish", "./engines/stockfish/stockfish_15_x64.exe",
+                        "depth", parent.getEngineVsEngineLvl1());
                 p2 = new ComputerPlayer("Stockfish", "./engines/stockfish/stockfish_15_x64.exe",
-                        "depth", 4);
+                        "depth", parent.getEngineVsEngineLvl2());
                 break;
             default:
                 p1 = new HumanPlayer(parent.controller.getPlayerName1());
