@@ -83,9 +83,14 @@ public class Controller {
         return db.lightSquare;
     }
 
-    private void repaintChessboard(){
-        window.chessBoard = new ChessBoard(8,8, db.squareSize,
-                db.lightSquare, db.darkSquare, db.p1,db.p2, db.position);
+    public void repaintChessboard(){
+        /*window.chessBoard = new ChessBoard(8,8, db.squareSize,
+                db.lightSquare, db.darkSquare, db.p1,db.p2, db.position);*/
+        window.chessBoard.setNewColor(getDarkSquare(), getLightSquare());
+    }
+
+    public void addPlayers(Player white, Player black) {
+        window.chessBoard.setupGame(white, black);
     }
 
     public void setLightSquare(Color lightSquare) {

@@ -1,5 +1,7 @@
 package chess.gui;
 
+import chess.core.Controller;
+
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import java.awt.*;
@@ -7,7 +9,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public final class OptionsWindow extends BaseWindow {
-    private MenuWindow windowParent;
+    private BaseWindow windowParent;
     private final Color[] light={Color.white,new Color(247, 224, 158),new Color(198, 216, 247),new Color(194, 194, 194)};
     private final Color[] dark={Color.black,new Color(71, 53, 0),new Color(18, 37, 69),new Color(56, 56, 56)};
     private final JComboBox<Color> lightBox = new JComboBox<>(light);
@@ -23,7 +25,7 @@ public final class OptionsWindow extends BaseWindow {
         }
     }
 
-    OptionsWindow(MenuWindow parent){
+    OptionsWindow(BaseWindow parent){
         windowParent = parent;
         setSize(500,200);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -64,14 +66,26 @@ public final class OptionsWindow extends BaseWindow {
         @Override
         public void actionPerformed(ActionEvent event) {
             if(event.getSource()==lightBox){
-                windowParent.controller.setLightSquare((Color) lightBox.getSelectedItem());
-                windowParent.chessBoard.refreshLinks(8, 8);
-                windowParent.chessBoard.repaint();
+                try {
+                    MenuWindow mw = (MenuWindow)windowParent;
+                    mw.controller.setLightSquare((Color) lightBox.getSelectedItem());
+                    mw.controller.repaintChessboard();
+                }
+                catch (ClassCastException e) {
+                    GameWindow gw = (GameWindow)windowParent;
+                    gw.chessBoard.setNewColor(null, (Color) lightBox.getSelectedItem());
+                }
             }
             else if(event.getSource()==darkBox){
-                windowParent.controller.setDarkSquare((Color) darkBox.getSelectedItem());
-                windowParent.chessBoard.refreshLinks(8, 8);
-                windowParent.chessBoard.repaint();
+                try {
+                    MenuWindow mw = (MenuWindow)windowParent;
+                    mw.controller.setDarkSquare((Color) darkBox.getSelectedItem());
+                    mw.controller.repaintChessboard();
+                }
+                catch (ClassCastException e) {
+                    GameWindow gw = (GameWindow)windowParent;
+                    gw.chessBoard.setNewColor((Color) darkBox.getSelectedItem(), null);
+                }
             }
 
         }

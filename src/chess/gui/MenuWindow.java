@@ -117,13 +117,11 @@ public class MenuWindow extends BaseWindow {
         public void actionPerformed(ActionEvent event) {
             if(event.getSource()==defaultPosition){
                 chessBoard.getChessPosition().parsePosition(ChessPosition.defaultPosition);
-                chessBoard.refreshLinks(8, 8);
                 chessBoard.repaint();
                 return;
             }
             else if(event.getSource()==clearPosition){
                 chessBoard.getChessPosition().parsePosition(ChessPosition.emptyPosition);
-                chessBoard.refreshLinks(8, 8);
                 chessBoard.repaint();
                 return;
             }

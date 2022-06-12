@@ -1,6 +1,7 @@
 package chess.gui;
 
 import chess.core.ChessBoard;
+import chess.core.ChessClock;
 import chess.core.ChessPosition;
 import chess.players.ComputerPlayer;
 import chess.players.HumanPlayer;
@@ -21,8 +22,9 @@ import java.io.PrintWriter;
 
 public final class GameWindow extends BaseWindow{
     MenuWindow windowParent;
+    ChessBoard chessBoard;
     public GameWindow(MenuWindow parent, int mode) throws IOException {
-        OpeningBook.readFromFile();
+        OpeningBook.readFromFile("./book/book.txt");
         windowParent = parent;
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         addWindowListener( new WindowAdapter()
@@ -42,6 +44,7 @@ public final class GameWindow extends BaseWindow{
         addToRightMenu(exportFen);
         EventHandler handler = new EventHandler();
         exportFen.addActionListener(handler);
+
 
         // chess board setup
         Player p1, p2;
@@ -74,9 +77,53 @@ public final class GameWindow extends BaseWindow{
             position = ChessPosition.defaultPosition;
 
 
-        ChessBoard chessBoard = new ChessBoard(8, 8, 80,
+        chessBoard = new ChessBoard(8, 8, 80,
                 lightSquare, darkSquare, p1, p2, position);
+        ChessClock clock = null;
+
+        String timeFormat = parent.controller.getTimeFormat();
+        if (timeFormat.matches("[0-9]+\\+[0-9]+")) {
+            clock = new ChessClock(parent.controller.getTimeFormat());
+            gbc.gridx = 0;
+            gbc.gridy = 1;
+            gbc.gridwidth = gbc.gridheight = 1;
+            gbc.fill = GridBagConstraints.NONE;
+            gbc.anchor = GridBagConstraints.WEST;
+            gbc.weightx = 70;
+            gbc.weighty = 10;
+            clock.linkChessBoard(chessBoard);
+            chessBoard.addClocks(clock);
+            chessPanel.add(clock, gbc);
+        }
         chessPanel.add(chessBoard);
+        GradButton undoMove = new GradButton();
+        StylizeButton(undoMove, "Undo move");
+        undoMove.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                chessBoard.undoMove();
+            }
+        });
+        undoMove.setEnabled(chessBoard.canUndo());
+        chessPanel.add(undoMove);
+        GradButton rewindForward = new GradButton();
+        StylizeButton(rewindForward, "->");
+        rewindForward.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                chessBoard.moveHistoryRewind(true);
+            }
+        });
+        GradButton rewindBackward = new GradButton();
+        StylizeButton(rewindBackward, "<-");
+        rewindBackward.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                chessBoard.moveHistoryRewind(false);
+            }
+        });
+        chessPanel.add(rewindForward);
+        chessPanel.add(rewindBackward);
 
         gbc.gridx = 0;
         gbc.gridy = 1;
@@ -86,7 +133,6 @@ public final class GameWindow extends BaseWindow{
         gbc.weightx = 70;
         gbc.weighty = 100;
         baseFrame.add(chessPanel, gbc);
-
 
         add(baseFrame);
         setMinimumSize(new Dimension(1150,1050));
@@ -108,6 +154,4 @@ public final class GameWindow extends BaseWindow{
 
         }
     }
-
-
 }

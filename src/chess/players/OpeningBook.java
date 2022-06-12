@@ -11,13 +11,12 @@ public class OpeningBook { //goes up to move 6
     private static List<String> openingLines = new ArrayList<String>();
     private static boolean didRead = false;
     private static Random rand = new Random();
-    public static boolean readFromFile() {
-        System.out.println("Reading the book");
+    public static boolean readFromFile(String path) {
         if (didRead) {
             return openingLines.size() > 0;
         }
         didRead = true;
-        File openingBook = new File("./book/book.txt");
+        File openingBook = new File(path);
         try {
             Scanner reader = new Scanner(openingBook);
             while (reader.hasNextLine()) {
@@ -43,7 +42,6 @@ public class OpeningBook { //goes up to move 6
             if (i % 2 == 0) {
                 moveHistoryString.append((i + 2) / 2 + ".");
             }
-            System.out.println("moveHistory converted to algebraic notation: " + moveHistoryString);
             for (String s : openingLines) {
                 if (s.contains(moveHistoryString)) {
                     matchingLines.add(s);

@@ -49,6 +49,11 @@ public class ChessPosition {
         rookPositionX = new int[2][2];
         enPassant = new int[2];
         squares = new ChessSquare[height][width];
+        for (int i = 0; i < height; ++i) {
+            for (int j = 0; j < width; ++j) {
+                squares[i][j] = new ChessSquare(null, j, i);
+            }
+        }
         if (!parsePosition(position)) {
             System.out.println("Invalid FEN, applying default starting position...");
             parsePosition(defaultPosition);
@@ -175,13 +180,14 @@ public class ChessPosition {
 
     public boolean parsePosition(String position) {
         whiteToMove = true;
-        fullMove = halfMove = -1;
+        fullMove = 0;
+        halfMove = 2;
         enPassant[0] = enPassant[1] = -1;
         castleFlags = 0;
         rookPositionX[0][0] = rookPositionX[0][1] = rookPositionX[1][0] = rookPositionX[1][1] = -1;
         for (int i = 0; i < height; ++i) {
             for (int j = 0; j < width; ++j) {
-                squares[i][j] = null;
+                squares[i][j].removePiece();
             }
         }
         if (position == null || position.length() == 0) {
@@ -335,12 +341,16 @@ public class ChessPosition {
                             ++i;
                         }
                         --i;
-                        while (--skip >= 0) {
+                        /*while (--skip >= 0) {
                             if (file == width) {
                                 return false;
                             }
                             squares[rank][file] = new ChessSquare(null, file, rank);
                             ++file;
+                        }*/
+                        file += skip;
+                        if (file > width) {
+                            return false;
                         }
                     } else if (Piece.isValidPiece(c)) {
                         if (file >= width || rank >= height) {
@@ -383,7 +393,8 @@ public class ChessPosition {
                                 piece = new Pawn(c);
                                 break;
                         }
-                        squares[rank][file] = new ChessSquare(piece, file, rank);
+                        //squares[rank][file] = new ChessSquare(piece, file, rank);
+                        squares[rank][file].addPiece(piece);
                         ++file;
                     } else {
                         return false;
@@ -859,4 +870,9 @@ public class ChessPosition {
     public int getHalfMove() { return halfMove; }
 
     public List<RealMove> getAllMoves() { return allLegalMoves; }
+
+    public static String stripFenOfMoves(String fen) {
+        return fen.split(" ")[0] + fen.split(" ")[1] + fen.split(" ")[2]
+                + fen.split(" ")[3];
+    }
 }

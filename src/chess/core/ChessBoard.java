@@ -8,18 +8,26 @@ import javax.swing.*;
 import javax.swing.Timer;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.List;
 
 class ChessVisualSquare extends JPanel {
-    ChessSquare link;
-    Color color;
-    boolean legalDestination;
+    protected ChessSquare link;
+    private Color color;
+    private boolean legalDestination;
 
     //for sprite
-    Point boardPoint;
-    boolean spriteMoving;
-    Image sprite;
+    private Point boardPoint;
+    private boolean spriteMoving;
+    private Image sprite;
 
     ChessVisualSquare( ChessSquare link, Color color, int squareSize) {
         this.link = link;
@@ -31,6 +39,11 @@ class ChessVisualSquare extends JPanel {
         this.setPreferredSize(new Dimension(squareSize, squareSize));
         this.setBackground(color);
         this.setOpaque(true);
+    }
+
+    public void setNewColor(Color color) {
+        this.color = color;
+        this.setBackground(color);
     }
 
     public void markAsLegalDestination(Color color) {
@@ -125,16 +138,17 @@ class ChessVisualSquare extends JPanel {
 }
 
 class MovingSprite {
-    ChessVisualSquare movingSprite;
-    Point moveDest;
-    Point moveVel;
+    protected ChessVisualSquare movingSprite;
+    protected Point moveDest;
+    protected Point moveVel;
 
     public MovingSprite(ChessVisualSquare from, ChessVisualSquare to, Image sprite) {//Point moveDest) {
         to.setupSprite(sprite); //this is kinda bad
-        this.moveDest = new Point(to.boardPoint.x, to.boardPoint.y);
+        this.moveDest = new Point(to.getBoardPoint().x, to.getBoardPoint().y);
         this.moveVel = new Point(0, 0);
         to.snapSpriteToSquare(from.link.getFile(), from.link.getRank(), from.getHeight());
-        to.spriteMoving = true;
+        //to.spriteMoving = true;
+        to.setSpriteMoving(true);
         this.movingSprite = to;
     }
 
@@ -150,19 +164,20 @@ class MovingSprite {
     public void stopMoving() {
         if (isMoving()) {
             movingSprite.snapSpriteToSquare(movingSprite.getHeight());
-            movingSprite.spriteMoving = false;
+            //movingSprite.spriteMoving = false;
+            movingSprite.setSpriteMoving(false);
             movingSprite = null;
         }
     }
 
     public void move() {
-        movingSprite.boardPoint.x += moveVel.x;
-        movingSprite.boardPoint.y += moveVel.y;
+        movingSprite.getBoardPoint().x += moveVel.x;
+        movingSprite.getBoardPoint().y += moveVel.y;
 
     }
 
     boolean isMoving() {
-        return (movingSprite != null && movingSprite.spriteMoving);
+        return (movingSprite != null && movingSprite.isSpriteMoving());
     }
 }
 
@@ -271,9 +286,10 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
     }
 
     private HashMap<Character, Image> scaledPieces;
-
+    private int score;
     private Player white;
     private Player black;
+    private ChessClock clock;
     private ChessVisualSquare[][] squares;
     private ChessPosition chessPosition;
     private int squareSize;
@@ -289,6 +305,12 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
     private String startPos;
 
     private Deque<RealMove> moveHistory;
+
+    private HashMap<String, Integer> positionHistory;
+
+    private ChessPosition displayPosition;
+
+    private RealMove currentDisplay;
 
     public ChessPosition getChessPosition() { return chessPosition;}
 
@@ -309,15 +331,18 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
                       Player white, Player black, String fen) {
         this.setLayout(new GridLayout(width, height, 0, 0));
         chessPosition = new ChessPosition(width, height, fen);
+        displayPosition = chessPosition;
         this.startPos = chessPosition.getFen().toString();
         this.squareSize = squareSize;
-        this.white = white;
-        this.black = black;
+        //this.white = white;
+        //this.black = black;
+        this.score = 0;
         this.squares = new ChessVisualSquare[height][width];
         this.initAllSprites();
         this.selection = null;
         this.moveHistory = new ArrayDeque<RealMove>();
         this.movingSprites = new ArrayList<MovingSprite>();
+        this.positionHistory = new HashMap<String, Integer>();
         this.isDragged = false;
         this.zombie = null;
         for (int i = 0; i < height; ++i) {
@@ -337,18 +362,9 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
                 this.add(squares[i][j]);
             }
         }
-        playerThink(1000);
+        //playerThink(1000);
+        setupGame(white, black);
     }
-
-    public void refreshLinks(int height, int width) {
-        for (int i = 0; i < height; ++i) {
-            for (int j = 0; j < width; ++j) {
-                squares[i][j].link = chessPosition.getSquare(i, j);
-            }
-        }
-    }
-
-
 
     public ChessBoard(){
         this(8, 8, 80, Color.white, Color.black,
@@ -449,16 +465,103 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
         black.undoMove();
     }
 
+    public void moveHistoryRewind(boolean forward) {
+        if (moveHistory.isEmpty()) {
+            return;
+        }
+        resetMoveSelection();
+        if (currentDisplay == null) {
+            if (!forward) {
+                for (RealMove m : moveHistory) {
+                    currentDisplay = m;
+                }
+            }
+        }
+        else {
+            if (forward) {
+                boolean setNow = false, updated = false;
+                for (RealMove m : moveHistory) {
+                    if (setNow) {
+                        currentDisplay = m;
+                        updated = true;
+                        break;
+                    }
+                    if (m == currentDisplay) {
+                        setNow = true;
+                    }
+                }
+                if (!updated) {
+                    currentDisplay = null;
+                }
+            }
+            else {
+                RealMove prev = null;
+                if (currentDisplay == moveHistory.getFirst()) {
+                    return;
+                }
+                for (RealMove m : moveHistory) {
+                    if (m == currentDisplay) {
+                        break;
+                    }
+                    prev = m;
+                }
+                currentDisplay = prev;
+            }
+        }
+        if (currentDisplay == null) {
+            displayPosition = chessPosition;
+        }
+        else {
+            displayPosition = new ChessPosition(chessPosition.height(), chessPosition.width(), startPos);
+            for (RealMove m : moveHistory) {
+                if (m == currentDisplay) {
+                    break;
+                }
+                displayPosition.move(new RealMove(
+                        displayPosition.getSquare(m.from().getRank(), m.from().getFile()),
+                        displayPosition.getSquare(m.to().getRank(), m.to().getFile()),
+                        m.flags(),
+                        m.getArg(),
+                        m.getHalfMove()
+                        ));
+            }
+        }
+        refreshLinks();
+    }
+
+    public boolean canUndo() {
+        return score == 0 && (white.getIsHuman() || black.getIsHuman());
+    }
+
     public void undoMove() {
-        if (white.getIsHuman() || black.getIsHuman()) {
+        if (canUndo()) {
             resetMoveSelection();
             zombie = null;
             if (!moveHistory.isEmpty()) {
+                if (hasClock()) {
+                    if (chessPosition.isWhiteToMove()) {
+                        clock.stopWhite(false);
+                        clock.startBlack();
+                    }
+                    else {
+                        clock.stopBlack(false);
+                        clock.startWhite();
+                    }
+                }
                 playerStop();
+                String fen = ChessPosition.stripFenOfMoves(chessPosition.getFen().toString());
+                Integer historyValue = positionHistory.get(fen);
+                if (historyValue != null) {
+                    if (historyValue > 1) {
+                        positionHistory.put(fen, historyValue - 1);
+                    }
+                    else {
+                        positionHistory.remove(historyValue);
+                    }
+                }
                 chessPosition.undoMove(moveHistory.removeLast());
                 stopMoving();
                 chessPosition.savePosition();
-                System.out.println("undoing the last move");
                 playerThink(1000);
                 this.repaint();
             }
@@ -499,26 +602,74 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
             moveAnimTimer.start();
         }
         this.repaint();
-        chessPosition.savePosition();
+        String fenStrip = ChessPosition.stripFenOfMoves(chessPosition.savePosition().toString());
+        Integer prevNum = positionHistory.put(fenStrip, positionHistory.getOrDefault(fenStrip, 0) + 1);
         if (chessPosition.getNumLegalMoves() == 0) {
             if (chessPosition.kingInCheck()) {
                 if (chessPosition.isWhiteToMove()) {
-                    System.out.println("Black wins!");
+                    finishGame("Black wins by checkmate!", -10);
                 }
                 else {
-                    System.out.println("White wins!");
+                    finishGame("White wins by checkmate!", 10);
                 }
             }
             else {
-                System.out.println("Stalemate!");
+                finishGame("Draw by stalemate!", 5);
             }
         }
         else if (chessPosition.getHalfMove() >= 50) {
-            System.out.println("Draw by the fifty-move rule!");
+            finishGame("Draw by the fifty-move rule!", 5);
+        }
+        else if (prevNum != null && prevNum >= 2) {
+            finishGame("Draw by 3-fold repetition!", 5);
         }
         else {
+            if (hasClock()) {
+                if (chessPosition.isWhiteToMove()) {
+                    clock.stopBlack(true);
+                    clock.startWhite();
+                }
+                else {
+                    clock.stopWhite(true);
+                    clock.startBlack();
+                }
+            }
             playerThink(500); //fixme: this may cause flagging problems, seeing as the bot will waste 0.5s after each move
         }
+        if (score == 0) {
+            exportToPgn("lastGame.txt");
+        }
+        else {
+            Path path = FileSystems.getDefault().getPath("exports/lastGame.txt");
+            try {
+                Files.delete(path);
+            } catch (IOException e) {
+            }
+            exportToPgn(
+                    white.getName() + "_vs_" +
+                    black.getName() + "_" + getCurrentDate("yyyy.MM.dd_hh.mm.ss") +
+                    ".pgn");
+        }
+    }
+
+    public void finishGame(String message, int score) {
+        if (hasClock()) {
+            clock.stopBlack(false);
+            clock.stopWhite(false);
+        }
+        this.score = score;
+        playerStop();
+        resetMoveSelection();
+        JOptionPane.showOptionDialog(
+                null,
+                message,
+                "Game Over",
+                JOptionPane.OK_OPTION,
+                JOptionPane.INFORMATION_MESSAGE,
+                new ImageIcon(new ImageIcon("sprites/chess_icon.png").getImage().getScaledInstance(64, 64, 0)),
+                new String[]{"Ok"},
+                0
+                );
     }
 
     private void stopMoving() {
@@ -531,6 +682,88 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
             moveAnimTimer.stop();
         }
         this.repaint();
+    }
+
+    private void refreshLinks() {
+        for (int i = 0; i < displayPosition.height(); ++i) {
+            for (int j = 0; j < displayPosition.width(); ++j) {
+                squares[i][j].link = displayPosition.getSquare(i, j);
+            }
+        }
+        this.repaint();
+    }
+
+    private String getCurrentDate(String pattern) {
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern(pattern);
+        LocalDateTime now = LocalDateTime.now();
+        return dtf.format(now);
+    }
+
+    public String exportToPgn() {
+        StringBuilder pgn = new StringBuilder();
+        pgn.append("[Event \"ChessApp Game\"]\n");
+        pgn.append("[Site \"Software Engineering ChessApp Project\"]\n");
+        pgn.append("[Date \"" + getCurrentDate("yyyy.MM.dd") + "\"]\n");
+        pgn.append("[Round \"1\"]\n");
+        pgn.append("[White \"" + (white.getIsHuman() ? "Human, " : "Bot, ") + white.getName() + "\"]\n");
+        pgn.append("[Black \"" + (black.getIsHuman() ? "Human, " : "Bot, ") + black.getName() + "\"]\n");
+        pgn.append("[Result \"");
+        switch (score) {
+            case 0:
+                pgn.append("*");
+                break;
+            case 10:
+                pgn.append("1-0");
+                break;
+            case 5:
+                pgn.append("1/2-1/2");
+                break;
+            default:
+                pgn.append("0-1");
+                break;
+        }
+        pgn.append("\"]\n");
+        if (hasClock()) {
+            pgn.append("[TimeFormat: \"" + clock.getStartSeconds() + "+" + clock.getIncrement() + "\"]\n");
+        }
+        if (startPos.compareTo(ChessPosition.defaultPosition) != 0) {
+            pgn.append("[SetUp \"1\"]\n[FEN \"" + startPos + "\"]\n");
+
+        }
+        pgn.append("\n");
+        int i = 0;
+        for (RealMove m : moveHistory) {
+            if (++i % 2 != 0) {
+                pgn.append(((i + 1) / 2) + ".");
+            }
+            pgn.append(m.getAlgebraicMove() + ' ');
+        }
+        switch (score) {
+            case 10:
+                pgn.append("1-0");
+                break;
+            case 5:
+                pgn.append("1/2-1/2");
+                break;
+            case -10:
+                pgn.append("0-1");
+                break;
+            default:
+                break;
+        }
+        return pgn.toString();
+    }
+
+    public void exportToPgn(String filename) {
+        try {
+            FileOutputStream fout = new FileOutputStream("exports/" + filename, false);
+            char ch[] = exportToPgn().toCharArray();
+            for (int i = 0; i < ch.length; i++)
+                fout.write(ch[i]);
+            fout.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -569,6 +802,9 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
 
     @Override
     public void mousePressed(MouseEvent e) {
+        if (displayPosition != chessPosition) {
+            return;
+        }
         if (e.getButton() == MouseEvent.BUTTON1) {
             boolean moveMade = false;
             stopMoving();
@@ -597,28 +833,18 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
             }
             this.repaint();
         }
+    }
 
-        if (e.getButton() == MouseEvent.BUTTON3) {
-            undoMove();
-        }
-        /*if (e.getButton() == 2) {
-            //perft test - fixme: move to tests/
-            TestPerft tests[] = new TestPerft[5];
-            tests[0] = new TestPerft("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 1, 6);
-            tests[1] = new TestPerft("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -", 1, 5);
-            tests[2] = new TestPerft("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -", 1, 6);
-            tests[3] = new TestPerft("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1", 1, 5);
-            tests[4] = new TestPerft("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8", 1, 5);
-            for (TestPerft t : tests) {
-                System.out.println("Test: " + t.getFen());
-                chessPosition.parsePosition(t.getFen());
-                for (int i = t.getMinDepth(); i <= t.getMaxDepth(); ++i) {
-                    System.out.println("For depth " + i + " there are " + perft(i, i, false) + " nodes");
-                }
-            }
-            System.out.println("The end");
-        }
-         */
+    public void whiteFlagged() {
+        clock.stopWhite(false);
+        clock.stopBlack(false);
+        finishGame("Black won on time!", -10);
+    }
+
+    public void blackFlagged() {
+        clock.stopWhite(false);
+        clock.stopBlack(false);
+        finishGame("White won on time!", 10);
     }
 
     //move timer
@@ -631,8 +857,8 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
                     continue;
                 }
                 stillMoving = true;
-                int dx = ms.moveDest.x - ms.movingSprite.boardPoint.x,
-                        dy = ms.moveDest.y - ms.movingSprite.boardPoint.y;
+                int dx = ms.moveDest.x - ms.movingSprite.getBoardPoint().x,
+                        dy = ms.moveDest.y - ms.movingSprite.getBoardPoint().y;
                 int dxabs = Math.abs(dx), dyabs = Math.abs(dy);
                 if (dxabs <= Math.abs(ms.moveVel.x) && dyabs <= Math.abs(ms.moveVel.y)) {
                     ms.stopMoving();
@@ -667,6 +893,34 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
         }
     }
 
+    public void setNewColor(Color darkSquare, Color lightSquare) {
+        for (int i = 0; i < squares.length; ++i) {
+            for (int j = 0; j < squares[i].length; ++j) {
+                boolean isLight = (i + j) % 2 == 0;
+                if (isLight && lightSquare == null) {
+                    continue;
+                }
+                if (!isLight && darkSquare == null) {
+                    continue;
+                }
+                squares[i][j].setNewColor(isLight ? lightSquare : darkSquare);
+            }
+        }
+        this.repaint();
+    }
+
+    public void setupGame(Player white, Player black) {
+        this.white = white;
+        this.black = black;
+        playerThink(1000);
+    }
+
+    public void addClocks(ChessClock clock) {
+        this.clock = clock;
+    }
+
+    public boolean hasClock() { return clock != null; }
+
     //unused, but they still have to be here
     @Override
     public void mouseEntered(MouseEvent e) {
@@ -686,95 +940,5 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
     @Override
     public void mouseMoved(MouseEvent e) {
 
-    }
-
-    //perft test - fixme: move to tests/
-    private class TestPerft {
-        private String fen;
-        private int minDepth;
-        private int maxDepth;
-
-        public TestPerft(String fen, int minDepth, int maxDepth) {
-            this.fen = fen;
-            this.minDepth = minDepth;
-            this.maxDepth = maxDepth;
-        }
-
-        public String getFen() {
-            return fen;
-        }
-
-        public int getMaxDepth() {
-            return maxDepth;
-        }
-
-        public int getMinDepth() {
-            return minDepth;
-        }
-    }
-
-    public void printMove(RealMove rm) {
-        System.out.print(Character.toString(rm.getFileFrom() + 'a') + "" + Character.toString(squares.length - rm.getRankFrom() + '0'));
-        System.out.print(Character.toString(rm.getFileDestination() + 'a') + "" + Character.toString(squares.length - rm.getRankDestination() + '0') );
-        System.out.print(rm.getArg() != '\0' ? rm.getArg() : "");
-    }
-
-    /*
-    Test: rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
-    For depth 1 there are 20 nodes
-    For depth 2 there are 400 nodes
-    For depth 3 there are 8902 nodes
-    For depth 4 there are 197281 nodes
-    For depth 5 there are 4865609 nodes
-    For depth 6 there are 119060324 nodes
-
-    Test: r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -
-    For depth 1 there are 48 nodes
-    For depth 2 there are 2039 nodes
-    For depth 3 there are 97862 nodes
-    For depth 4 there are 4085603 nodes
-    For depth 5 there are 193690690 nodes
-
-    Test: 8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -
-    For depth 1 there are 14 nodes
-    For depth 2 there are 191 nodes
-    For depth 3 there are 2812 nodes
-    For depth 4 there are 43238 nodes
-    For depth 5 there are 674624 nodes
-    For depth 6 there are 11030083 nodes
-
-    Test: r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1
-    For depth 1 there are 6 nodes
-    For depth 2 there are 264 nodes
-    For depth 3 there are 9467 nodes
-    For depth 4 there are 422333 nodes
-    For depth 5 there are 15833292 nodes
-
-    Test: rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8
-    For depth 1 there are 44 nodes
-    For depth 2 there are 1486 nodes
-    For depth 3 there are 62379 nodes
-    For depth 4 there are 2103487 nodes
-    For depth 5 there are 89941194 nodes
-    The end*/
-    //fixme: move to tests
-    public int perft(int startDepth, int depth, boolean printMoves) {
-        if (depth == 0) {
-            return 1;
-        }
-        int total = 0;
-        for (RealMove mv : chessPosition.getAllMoves()) {
-            if (depth == startDepth && printMoves) {
-                printMove(mv);
-            }
-            chessPosition.move(mv, false);
-            int addTotal = perft(startDepth,depth - 1, printMoves);
-            if (depth == startDepth && printMoves) {
-                System.out.println(": " + addTotal);
-            }
-            total += addTotal;
-            chessPosition.undoMove(mv);
-        }
-        return total;
     }
 }

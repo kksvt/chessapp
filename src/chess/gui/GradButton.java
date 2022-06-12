@@ -44,6 +44,7 @@ public class GradButton extends JButton {
 //        setBorder(new EmptyBorder(10, 20, 10, 20));
         setBorder(new EmptyBorder(20, 20, 20, 20));
         setForeground(new Color(240, 240, 240));
+        setFocusable(false);
         addMouseListener(new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent me) {

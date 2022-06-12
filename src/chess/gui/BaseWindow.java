@@ -46,7 +46,7 @@ public class BaseWindow extends JFrame {
         BaseWindow thisRef = this;
         optionsButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent event) {
-                OptionsWindow ow = new OptionsWindow((MenuWindow) thisRef);
+                OptionsWindow ow = new OptionsWindow(thisRef);
                 ow.setVisible(true);
             }
         });

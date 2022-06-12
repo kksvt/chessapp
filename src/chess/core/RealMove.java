@@ -122,11 +122,13 @@ public class RealMove {
         if (MoveFlags.hasFlag(flags, MoveFlags.RM_ROOK_CASTLING)) {
             return algMove;
         }
+        //While the FIDE handbook [12] uses the digit zero, the SAN PGN-Standard requires the capital letter 'O' for its export format.
+        //https://www.chessprogramming.org/Algebraic_Chess_Notation#Castling
         if (MoveFlags.hasFlag(flags, MoveFlags.RM_CASTLE_KINGSIDE)) {
-            algMove.append("0-0");
+            algMove.append("O-O");
         }
         else if (MoveFlags.hasFlag(flags, MoveFlags.RM_CASTLE_QUEENSIDE)) {
-            algMove.append("0-0-0");
+            algMove.append("O-O-O");
         }
         else {
             char piece = fromPiece.getSign();
@@ -353,10 +355,6 @@ public class RealMove {
             }
         }
         if (startSquare.size() > 0) {
-            /*System.out.println("startSquares found!: ");
-            for (ChessSquare s : startSquare) {
-                System.out.println("Rank: " + s.getRank() + ", File: " + s.getFile());
-            }*/
             for (ChessSquare s : startSquare) {
                 for (RealMove m : s.legalMoves) {
                     if (fileTo != -1 && fileTo != m.getFileDestination()) {
