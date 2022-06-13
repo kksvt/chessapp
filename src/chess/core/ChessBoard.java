@@ -712,15 +712,7 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
             exportToPgn("lastGame.pgn");
         }
         else if (think) {
-            Path path = FileSystems.getDefault().getPath("exports/lastGame.pgn");
-            try {
-                Files.delete(path);
-            } catch (IOException e) {
-            }
-            exportToPgn(
-                    white.getName() + "_vs_" +
-                    black.getName() + "_" + getCurrentDate("yyyy.MM.dd_hh.mm.ss") +
-                    ".pgn");
+            saveFinishedGame();
             playerStop();
         }
     }
@@ -907,16 +899,30 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
         }
     }
 
+    public void saveFinishedGame() {
+        Path path = FileSystems.getDefault().getPath("exports/lastGame.pgn");
+        try {
+            Files.delete(path);
+        } catch (IOException e) {
+        }
+        exportToPgn(
+                white.getName() + "_vs_" +
+                        black.getName() + "_" + getCurrentDate("yyyy.MM.dd_hh.mm.ss") +
+                        ".pgn");
+    }
+
     public void whiteFlagged() {
         clock.stopWhite(false);
         clock.stopBlack(false);
         finishGame("Black won on time!", -10);
+        saveFinishedGame();
     }
 
     public void blackFlagged() {
         clock.stopWhite(false);
         clock.stopBlack(false);
         finishGame("White won on time!", 10);
+        saveFinishedGame();
     }
 
     //move timer
@@ -991,6 +997,16 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
     }
 
     public boolean hasClock() { return clock != null; }
+
+    public ChessClock getClock() { return clock; }
+
+    public void removeClocks() {
+        if (hasClock()) {
+            clock.stopWhite(false);
+            clock.stopBlack(false);
+            clock = null;
+        }
+    }
 
     //unused, but they still have to be here
     @Override

@@ -1,0 +1,12 @@
+https://opengameart.org/content/chess-pieces-and-board-squares
+
+"An improved Cburnett chess set that appeals more to me (modified knight, bigger king, rook with consistent line width, black is now exact opposite colors, pawns are slightly less tall, etc)
+
+Includes HD pieces for every color, along with 2 dark squares and 2 light squares (brown, gray) also includes the original illustrator file where you can edit the drop shadow effect. Also includes SVGs.
+
+If using PNG try to use the 1x or 2x folder where the pieces vary in size (e.g. Pawn is smaller than rook instead of all of them being 512px in height exactly).
+
+ 
+
+Copyright/Attribution Notice: 
+JohnPablok's improved Cburnett chess set."

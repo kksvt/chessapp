@@ -28,7 +28,9 @@ public final class GameWindow extends BaseWindow{
         {
             public void windowClosing(WindowEvent e)
             {
+                chessBoard.removeClocks();
                 chessBoard.playerStop();
+                chessBoard = null;
                 parent.setVisible(true);
             }
         });
