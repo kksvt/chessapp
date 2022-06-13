@@ -410,19 +410,13 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
         }
     }
 
-    public ChessBoard(){
-        this(8, 8, 80, Color.white, Color.black,
+    public ChessBoard(int squareSize){
+        this(8, 8, squareSize, Color.white, Color.black,
                 new HumanPlayer("Player 1"),
                 new HumanPlayer("Player 2"),
                 ChessPosition.emptyPosition, 0, null, false);
     }
 
-    public ChessBoard(String def){
-        this(8, 8, 80, Color.white, Color.black,
-                new HumanPlayer("Player 1"),
-                new HumanPlayer("Player 2"),
-                ChessPosition.defaultPosition,0, null, false);
-    }
 
 
     public void addMoveToHistory(RealMove m) {

@@ -165,7 +165,7 @@ public final class GameWindow extends BaseWindow{
         baseFrame.add(chessPanel, gbc);
 
         add(baseFrame);
-        setMinimumSize(new Dimension(1150,1050));
+        setMinimumSize(new Dimension(1550,1030));
         setVisible(true);
         parent.controller.setMovesToMake(null);
     }

@@ -188,7 +188,7 @@ public class MenuWindow extends BaseWindow {
         chessPanel.setBorder(new EmptyBorder(5,0,0,0));
         chessPanel.setBackground(new Color(0, 0, 0, 0));
 
-        chessBoard = new ChessBoard();
+        chessBoard = new ChessBoard(75);
         chessPanel.add(chessBoard);
 
         gbc.gridx = 0;
@@ -199,10 +199,7 @@ public class MenuWindow extends BaseWindow {
         gbc.anchor = GridBagConstraints.SOUTH;
         gbc.weightx = 70;
         gbc.weighty = 100;
-        chessPanel.add(continueLast, gbc);
-        chessPanel.add(importPgn, gbc);
-        chessPanel.add(importFen, gbc);
-        chessPanel.add(exportFen, gbc);
+
 
         gbc.gridx = 0;
         gbc.gridy = 1;
@@ -217,7 +214,7 @@ public class MenuWindow extends BaseWindow {
         JPanel menuButtons = new JPanel();
         menuButtons.setBackground(new Color(0, 0, 0, 0));
         menuButtons.setLayout(new GridLayout(3,1, 0, 3));
-        menuButtons.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+        menuButtons.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
 
         MenuEventHandler handler = new MenuEventHandler();
         clearPosition.addActionListener(handler);
@@ -248,17 +245,23 @@ public class MenuWindow extends BaseWindow {
         gbc.gridy = 2;
         gbc.gridwidth = 2;
         gbc.gridheight = 1;
-        gbc.anchor = GridBagConstraints.SOUTH;
+        gbc.anchor = GridBagConstraints.SOUTHEAST;
         gbc.weighty = 2;
         JPanel footer = new JPanel();
+
+        footer.add(continueLast, gbc);
+        footer.add(importPgn, gbc);
+        footer.add(importFen, gbc);
+        footer.add(exportFen, gbc);
+
         footer.setBackground(new Color(0,0,0,0));
         footer.setLayout(new FlowLayout());
-        footer.setBorder(new EmptyBorder(5,0,0,0));
+        footer.setBorder(new EmptyBorder(0,0,0,0));
         baseFrame.add(footer, gbc);
 
         add(baseFrame);
 
-        setMinimumSize(new Dimension(1400,1050));
+        setMinimumSize(new Dimension(1550,1030));
         setVisible(true);
     }
 

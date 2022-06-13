@@ -14,13 +14,4 @@ public class PlayerTest {
         assertTrue(player.getIsHuman());
     }
 
-    @Test
-    public void playerBlackRobot(){
-        /*var player = new Player("Jim", false, false);
-        assertEquals(player.getName(), "Jim");
-        assertFalse(player.getIsHuman());
-        assertFalse(player.getIsWhite());*/
-    }
-
-
 }

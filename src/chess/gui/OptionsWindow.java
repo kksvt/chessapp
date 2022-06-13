@@ -102,7 +102,6 @@ public final class OptionsWindow extends BaseWindow {
 
                     darkSquares = c;
                     darkBox.getEditor().setItem("");
-
                 }
                 catch (ClassCastException e) {
                     try{
