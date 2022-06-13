@@ -675,7 +675,7 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
                 finishGame("Draw by stalemate!", 5);
             }
         }
-        else if (chessPosition.getHalfMove() >= 50) {
+        else if (chessPosition.getHalfMove() >= 100) {
             finishGame("Draw by the fifty-move rule!", 5);
         }
         else if (prevNum != null && prevNum >= 2) {
