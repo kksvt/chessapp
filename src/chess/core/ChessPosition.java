@@ -709,7 +709,6 @@ public class ChessPosition {
         if (!MoveFlags.hasFlag(move.flags(), MoveFlags.RM_ROOK_CASTLING)) {
             ++fullMove;
             whiteToMove = !whiteToMove;
-            //fixme: is there a less stupid way of implementing this?
             if (generateAlgebraicMove) {
                 move.generateAlgebraicMove(this);
                 calculateLegalMoves();
@@ -870,6 +869,50 @@ public class ChessPosition {
     public int getHalfMove() { return halfMove; }
 
     public List<RealMove> getAllMoves() { return allLegalMoves; }
+
+    public boolean isInsufficientMaterial() {
+        int numPieces = 0, numWhiteKnights = 0, numBlackKnights = 0,
+                numWhiteBishops = 0, numBlackBishops = 0;
+        for (ChessSquare sqr[] : squares) {
+            for (ChessSquare s : sqr) {
+                if (!s.isEmpty()) {
+                    char p = s.getPiece().getSign();
+                    switch (p) {
+                        case 'B':
+                            ++numWhiteBishops;
+                            break;
+                        case 'N':
+                            ++numWhiteKnights;
+                            break;
+                        case 'b':
+                            ++numBlackBishops;
+                            break;
+                        case 'n':
+                            ++numBlackKnights;
+                            break;
+                        case 'K':
+                        case 'k':
+                            break;
+                        default:
+                            return false;
+                    }
+                    if (Character.toLowerCase(p) != 'k') {
+                        ++numPieces;
+                    }
+                }
+            }
+        }
+        if (numPieces == 0) {
+            return true;
+        }
+        if (numPieces <= 2 && (numWhiteBishops <= 1 || numWhiteKnights <= 1)) {
+            if (numBlackBishops <= 1 || numBlackKnights <= 1) {
+                return true;
+            }
+            return false;
+        }
+        return false;
+    }
 
     public static String stripFenOfMoves(String fen) {
         return fen.split(" ")[0] + fen.split(" ")[1] + fen.split(" ")[2]

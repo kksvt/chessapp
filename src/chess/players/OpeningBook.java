@@ -22,6 +22,7 @@ public class OpeningBook { //goes up to move 6
             while (reader.hasNextLine()) {
                 openingLines.add(reader.nextLine());
             }
+            reader.close();
             return openingLines.size() > 0;
         } catch (FileNotFoundException e) {
             return false;
@@ -47,10 +48,18 @@ public class OpeningBook { //goes up to move 6
                     matchingLines.add(s);
                 }
             }
-            return matchingLines.size() > 0 ?
-                    matchingLines.get(rand.nextInt(matchingLines.size())).split(moveHistoryString.toString())[1].split(" ")[0]
-                    :
-                    null;
+            if (matchingLines.size() == 0) {
+                return null;
+            }
+            String splits[] = matchingLines.get(rand.nextInt(matchingLines.size())).split(moveHistoryString.toString());
+            switch (splits.length) {
+                case 2:
+                    return splits[1].split(" ")[0];
+                case 1:
+                    return splits[0];
+                default:
+                    return null;
+            }
         }
         return openingLines.get(rand.nextInt(openingLines.size())).substring(2).split(" ")[0];
     }

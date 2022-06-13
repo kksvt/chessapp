@@ -15,22 +15,20 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
 
 public final class GameWindow extends BaseWindow{
     MenuWindow windowParent;
     ChessBoard chessBoard;
     public GameWindow(MenuWindow parent, int mode) throws IOException {
-        OpeningBook.readFromFile("./book/book.txt");
         windowParent = parent;
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         addWindowListener( new WindowAdapter()
         {
             public void windowClosing(WindowEvent e)
             {
+                chessBoard.playerStop();
                 parent.setVisible(true);
             }
         });
@@ -51,22 +49,31 @@ public final class GameWindow extends BaseWindow{
 
         // chess board setup
         Player p1, p2;
+        int engLvl;
         switch (mode){
             case 1:
+                engLvl = parent.getEngineVsPlayerLvl();
                 p1 = new HumanPlayer(parent.controller.getPlayerName1());
-                p2 = new ComputerPlayer("Stockfish", "./engines/stockfish/stockfish_15_x64.exe",
-                        "depth", parent.getEngineVsPlayerLvl());
-                System.out.println(parent.getEngineVsPlayerLvl());
+                p2 = new ComputerPlayer("Stockfish" + engLvl, "./engines/stockfish/stockfish_15_x64.exe",
+                        "depth", engLvl);
                 break;
             case 2:
                 p1 = new HumanPlayer(parent.controller.getPlayerName1());
                 p2 = new HumanPlayer(parent.controller.getPlayerName2());
                 break;
             case 3:
-                p1 = new ComputerPlayer("Stockfish", "./engines/stockfish/stockfish_15_x64.exe",
-                        "depth", parent.getEngineVsEngineLvl1());
-                p2 = new ComputerPlayer("Stockfish", "./engines/stockfish/stockfish_15_x64.exe",
-                        "depth", parent.getEngineVsEngineLvl2());
+                int engLvl1 = parent.getEngineVsEngineLvl1(),
+                        engLvl2 = parent.getEngineVsEngineLvl2();
+                p1 = new ComputerPlayer("Stockfish" + engLvl1, "./engines/stockfish/stockfish_15_x64.exe",
+                        "depth", engLvl1);
+                p2 = new ComputerPlayer("Stockfish" + engLvl2, "./engines/stockfish/stockfish_15_x64.exe",
+                        "depth", engLvl2);
+                break;
+            case 4:
+                engLvl = parent.getEngineVsPlayerLvl();
+                p1 = new ComputerPlayer("Stockfish" + engLvl, "./engines/stockfish/stockfish_15_x64.exe",
+                        "depth", engLvl);
+                p2 = new HumanPlayer(parent.controller.getPlayerName2());
                 break;
             default:
                 p1 = new HumanPlayer(parent.controller.getPlayerName1());
@@ -78,13 +85,18 @@ public final class GameWindow extends BaseWindow{
         Color darkSquare = parent.controller.getDarkSquare();
 
         String position = parent.chessBoard.getChessPosition().getFen().toString();
-        ChessPosition cp;
         if(position.equals(ChessPosition.emptyPosition))
             position = ChessPosition.defaultPosition;
 
+        if (position.compareTo(ChessPosition.defaultPosition) == 0) {
+            OpeningBook.readFromFile("./book/book.txt");
+        }
 
         chessBoard = new ChessBoard(8, 8, 80,
-                lightSquare, darkSquare, p1, p2, position);
+                lightSquare, darkSquare, p1, p2, position,
+                parent.controller.getScore(),
+                parent.controller.getMovesToMake(),
+                true);
         ChessClock clock = null;
 
         String timeFormat = parent.controller.getTimeFormat();
@@ -135,6 +147,15 @@ public final class GameWindow extends BaseWindow{
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.gridwidth = gbc.gridheight = 1;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.EAST;
+        gbc.weightx = 70;
+        gbc.weighty = 10;
+        clock.linkChessBoard(chessBoard);
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.gridwidth = gbc.gridheight = 1;
         gbc.fill = GridBagConstraints.BOTH;
         gbc.anchor = GridBagConstraints.SOUTHWEST;
         gbc.weightx = 70;
@@ -144,13 +165,14 @@ public final class GameWindow extends BaseWindow{
         add(baseFrame);
         setMinimumSize(new Dimension(1150,1050));
         setVisible(true);
+        parent.controller.setMovesToMake(null);
     }
     class EventHandler implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent event) {
             try {
                 FileOutputStream fout = new FileOutputStream("exports/FEN.txt", false);
-                char ch[] = windowParent.chessBoard.getChessPosition().getFen().toString().toCharArray();
+                char ch[] = chessBoard.getChessPosition().getFen().toString().toCharArray();
                 for (int i = 0; i < ch.length; i++)
                     fout.write(ch[i]);
                 fout.close();

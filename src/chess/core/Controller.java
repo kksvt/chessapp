@@ -22,6 +22,9 @@ public class Controller {
         public Color darkSquare = Color.black;
 
         public String timeFormat = "10+0";
+        public String movesToMake = "";
+
+        public int score = 0;
     }
 
     final Database db = new Database();
@@ -124,4 +127,19 @@ public class Controller {
         repaintChessboard();
     }
 
+    public void setMovesToMake(String moves) {
+        db.movesToMake = moves;
+    }
+
+    public String getMovesToMake() {
+        return db.movesToMake;
+    }
+
+    public void setScore(int score) {
+        db.score = score;
+    }
+
+    public int getScore() {
+        return db.score;
+    }
 }

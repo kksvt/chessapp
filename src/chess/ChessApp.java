@@ -1,8 +1,6 @@
 package chess;
 
-import chess.core.ChessWindow;
 import chess.core.Controller;
-import chess.gui.BaseWindow;
 import chess.gui.MenuWindow;
 
 public class ChessApp {
