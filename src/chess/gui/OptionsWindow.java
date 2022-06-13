@@ -16,7 +16,7 @@ public final class OptionsWindow extends BaseWindow {
     private final JComboBox<Color> lightBox = new JComboBox<>(light);
     private final JComboBox<Color> darkBox = new JComboBox<>(dark);
 
-    private static Color ligthSquares = Color.white;
+    private static Color lightSquares = Color.white;
     private static Color darkSquares = Color.BLACK;
 
     OptionsWindow(BaseWindow parent){
@@ -27,11 +27,11 @@ public final class OptionsWindow extends BaseWindow {
         setTitle("Options");
 
 
-        lightBox.setEditable(true);
-        darkBox.setEditable(true);
+        lightBox.setEditable(false);
+        darkBox.setEditable(false);
 
-        lightBox.setBackground(ligthSquares);
-        lightBox.getEditor().getEditorComponent().setForeground(ligthSquares);
+        lightBox.setBackground(lightSquares);
+        lightBox.getEditor().getEditorComponent().setForeground(lightSquares);
         darkBox.getEditor().getEditorComponent().setForeground(darkSquares);
         darkBox.getEditor().getEditorComponent().setBackground((Color) darkSquares);
         lightBox.getEditor().setItem("");
@@ -56,7 +56,7 @@ public final class OptionsWindow extends BaseWindow {
         add(lightBox);add(darkBox);
 
 
-        OptionsWindow.EventHandler handler = new OptionsWindow.EventHandler();
+        EventHandler handler = new EventHandler();
         lightBox.addActionListener(handler);
         darkBox.addActionListener(handler);
 
@@ -77,17 +77,17 @@ public final class OptionsWindow extends BaseWindow {
                     lightBox.getEditor().getEditorComponent().setBackground(c);
                     lightBox.getEditor().getEditorComponent().setForeground(c);
 
-                    ligthSquares = c;
+                    lightSquares = c;
                     lightBox.getEditor().setItem("");
                 }
                 catch (ClassCastException e) {
-                    try{
-                        GameWindow gw = (GameWindow)windowParent;
-                        gw.chessBoard.setNewColor((Color) darkBox.getSelectedItem(), null);
-                    }catch (ClassCastException e2){
-                        MenuWindow mw = (MenuWindow) windowParent;
-                        mw.chessBoard.setNewColor((Color) darkBox.getSelectedItem(), null);
-                    }
+                    GameWindow gw = (GameWindow)windowParent;
+                    Color c = (Color) lightBox.getSelectedItem();
+                    gw.chessBoard.setNewColor(null, c);
+                    lightBox.getEditor().getEditorComponent().setBackground(c);
+                    lightBox.getEditor().getEditorComponent().setForeground(c);
+                    lightSquares = c;
+                    lightBox.getEditor().setItem("");
                 }
             }
             else if(event.getSource()==darkBox){
@@ -104,13 +104,13 @@ public final class OptionsWindow extends BaseWindow {
                     darkBox.getEditor().setItem("");
                 }
                 catch (ClassCastException e) {
-                    try{
-                        GameWindow gw = (GameWindow)windowParent;
-                        gw.chessBoard.setNewColor((Color) darkBox.getSelectedItem(), null);
-                    }catch (ClassCastException e2){
-                        MenuWindow mw = (MenuWindow) windowParent;
-                        mw.chessBoard.setNewColor((Color) darkBox.getSelectedItem(), null);
-                    }
+                    GameWindow gw = (GameWindow)windowParent;
+                    Color c = (Color) darkBox.getSelectedItem();
+                    gw.chessBoard.setNewColor((Color) c, null);
+                    darkBox.getEditor().getEditorComponent().setBackground(c);
+                    darkBox.getEditor().getEditorComponent().setForeground(c);
+                    darkSquares = c;
+                    darkBox.getEditor().setItem("");
                 }
             }
 
